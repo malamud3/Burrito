@@ -2,8 +2,6 @@ import { ActivityPath } from '../types/enums';
 
 export const STUDY_DURATION_SECONDS = 30 * 60;
 export const STUDY_DURATION_MINUTES = STUDY_DURATION_SECONDS / 60;
-export const ALLOCATION_METHOD = 'balanced_randomized_blocks';
-export const ALLOCATION_BLOCK_SIZE = 4;
 export const ALLOCATION_STORAGE_KEY = 'ctAdapt.allocation';
 
 export const STUDY_HINTS = Object.freeze({

@@ -1,29 +1,33 @@
 import { ActivityPath } from '../src/core/types/enums';
-import {
-  ALLOCATION_BLOCK_SIZE,
-  ALLOCATION_STORAGE_KEY,
-} from '../src/core/constants/study';
-import { assignStudyPath } from '../src/services/StudyAllocationService';
+import { ALLOCATION_STORAGE_KEY } from '../src/core/constants/study';
+import { recordStudyPathChoice } from '../src/services/StudyAllocationService';
 
 beforeEach(() => {
   localStorage.clear();
 });
 
-test('each complete randomized block assigns two participants to each path', () => {
-  const assignments = Array.from({ length: ALLOCATION_BLOCK_SIZE }, (_, index) =>
-    assignStudyPath(`P${index + 1}`).assignment,
-  );
-  expect(assignments.filter(({ activityPath }) => activityPath === ActivityPath.CLASSIC)).toHaveLength(2);
-  expect(assignments.filter(({ activityPath }) => activityPath === ActivityPath.RENATO)).toHaveLength(2);
-  expect(new Set(assignments.map(({ positionInBlock }) => positionInBlock))).toEqual(new Set([1, 2, 3, 4]));
+test('records the path selected by the participant', () => {
+  const result = recordStudyPathChoice('P01', ActivityPath.RENATO);
+  const stored = JSON.parse(localStorage.getItem(ALLOCATION_STORAGE_KEY));
+
+  expect(result.assignment).toMatchObject({
+    activityPath: ActivityPath.RENATO,
+    method: 'student_choice',
+  });
+  expect(stored.participants.P01).toEqual(result.assignment);
 });
 
-test('a participant code is not assigned twice and does not advance the sequence', () => {
-  const first = assignStudyPath('s01');
-  const duplicate = assignStudyPath(' S01 ');
+test('a participant code cannot be reused with a different path', () => {
+  const first = recordStudyPathChoice('s01', ActivityPath.CLASSIC);
+  const duplicate = recordStudyPathChoice(' S01 ', ActivityPath.RENATO);
   const stored = JSON.parse(localStorage.getItem(ALLOCATION_STORAGE_KEY));
 
   expect(duplicate.duplicate).toBe(true);
   expect(duplicate.assignment).toEqual(first.assignment);
-  expect(stored.nextIndex).toBe(1);
+  expect(stored.participants.S01).toEqual(first.assignment);
+});
+
+test('rejects invalid path selections without writing participant data', () => {
+  expect(() => recordStudyPathChoice('P01', 'unknown')).toThrow('המסלול שנבחר אינו תקין');
+  expect(localStorage.getItem(ALLOCATION_STORAGE_KEY)).toBeNull();
 });

@@ -4,11 +4,12 @@ import App from '../src/app/App';
 import AppProviders from '../src/context/AppProviders';
 import { useSessionContext } from '../src/context/SessionContext';
 import { useLogContext } from '../src/context/LogContext';
-import { ALLOCATION_STORAGE_KEY, STUDY_DURATION_SECONDS } from '../src/core/constants/study';
+import { STUDY_DURATION_SECONDS } from '../src/core/constants/study';
 import { ActivityPath } from '../src/core/types/enums';
 
 const click = (name) => fireEvent.click(screen.getByRole('button', { name: new RegExp(name) }));
 const typeInto = (element, value) => fireEvent.change(element, { target: { value } });
+const choosePath = (name) => fireEvent.click(screen.getByRole('radio', { name: new RegExp(name) }));
 const drawOnGraph = () => {
   const graphBoard = screen.getByRole('img', { name: /לוח שרטוט הפונקציה/ });
   graphBoard.getBoundingClientRect = () => ({
@@ -22,18 +23,6 @@ const drawOnGraph = () => {
   fireEvent.pointerDown(graphBoard, { clientX: 100, clientY: 100, button: 0, pointerId: 1 });
   fireEvent.pointerMove(graphBoard, { clientX: 150, clientY: 140, pointerId: 1 });
   fireEvent.pointerUp(graphBoard, { clientX: 150, clientY: 140, pointerId: 1 });
-};
-const seedAllocation = (paths) => {
-  localStorage.setItem(ALLOCATION_STORAGE_KEY, JSON.stringify({
-    schemaVersion: 1,
-    nextIndex: 0,
-    sequence: paths.map((activityPath, index) => ({
-      activityPath,
-      blockNumber: 1,
-      positionInBlock: index + 1,
-    })),
-    participants: {},
-  }));
 };
 const fillTransferAssessment = () => {
   [
@@ -75,9 +64,9 @@ beforeEach(() => {
 });
 
 test('classic path presents direct math questions and saves comparable responses', () => {
-  seedAllocation([ActivityPath.CLASSIC, ActivityPath.CLASSIC, ActivityPath.RENATO, ActivityPath.RENATO]);
   render(<App />);
   typeInto(screen.getByPlaceholderText('הכנס קוד משתתף/ת'), 'C01');
+  choosePath('המסלול הקלאסי');
   click('התחל/י');
 
   expect(screen.getByRole('heading', { name: 'בוחן מקדים' })).toBeInTheDocument();
@@ -119,9 +108,8 @@ test('classic path presents direct math questions and saves comparable responses
     studentId: 'C01',
     activityPath: 'classic',
     mode: 'student',
-    method: 'balanced_randomized_blocks',
-    allocationIndex: 1,
-    blockNumber: 1,
+    method: 'student_choice',
+    chosenAt: expect.any(Number),
     studyDurationMinutes: 30,
   });
   expect(start.data.sessionId).toBeTruthy();
@@ -151,14 +139,14 @@ test('researcher mode opens the dashboard without assigning a participant', () =
   click('התחל/י');
 
   expect(screen.getByRole('heading', { name: '📊 לוח בקרה — חוקר/ת' })).toBeInTheDocument();
-  expect(screen.getByText('משתתפים שהוקצו')).toBeInTheDocument();
+  expect(screen.getByText('משתתפים')).toBeInTheDocument();
   expect(screen.queryByRole('tab', { name: 'זיהוי קשיים' })).not.toBeInTheDocument();
 });
 
 test('pre-assessment must be completed before learning begins', () => {
-  seedAllocation([ActivityPath.CLASSIC, ActivityPath.CLASSIC, ActivityPath.RENATO, ActivityPath.RENATO]);
   render(<App />);
   typeInto(screen.getByPlaceholderText('הכנס קוד משתתף/ת'), 'PRE01');
+  choosePath('המסלול הקלאסי');
   click('התחל/י');
 
   expect(screen.getByRole('heading', { name: 'בוחן מקדים' })).toBeInTheDocument();
@@ -167,20 +155,35 @@ test('pre-assessment must be completed before learning begins', () => {
   expect(screen.queryByRole('heading', { name: 'חקירת פונקציה' })).not.toBeInTheDocument();
 });
 
+test('a student must choose one of the two learning paths before starting', () => {
+  render(<App />);
+  typeInto(screen.getByPlaceholderText('הכנס קוד משתתף/ת'), 'NO-PATH');
+  click('התחל/י');
+
+  expect(screen.getByText('נא לבחור מסלול למידה')).toBeInTheDocument();
+  expect(screen.queryByRole('heading', { name: 'בוחן מקדים' })).not.toBeInTheDocument();
+  expect(localStorage.getItem('ctAdapt.session')).toBeNull();
+});
+
 test('starting another participant preserves previous participant logs', () => {
-  seedAllocation([ActivityPath.CLASSIC, ActivityPath.CLASSIC, ActivityPath.RENATO, ActivityPath.RENATO]);
   render(<App />);
   typeInto(screen.getByPlaceholderText('הכנס קוד משתתף/ת'), 'P01');
+  choosePath('המסלול הקלאסי');
   click('התחל/י');
   window.history.replaceState({}, '', '/login');
   fireEvent.popState(window);
   typeInto(screen.getByPlaceholderText('הכנס קוד משתתף/ת'), 'P02');
+  choosePath('מסלול רנאטו');
   click('התחל/י');
 
   const starts = JSON.parse(localStorage.getItem('ctAdapt.logs'))
     .filter(({ actionType }) => actionType === 'activity_start');
   expect(starts).toHaveLength(2);
-  expect(starts.map(({ data }) => data.allocationIndex)).toEqual([1, 2]);
+  expect(starts.map(({ data }) => data.activityPath)).toEqual([
+    ActivityPath.CLASSIC,
+    ActivityPath.RENATO,
+  ]);
+  expect(starts.every(({ data }) => data.method === 'student_choice')).toBe(true);
 });
 
 test('session and logs restore from localStorage', () => {
@@ -267,9 +270,9 @@ test('opening the transfer route directly cannot skip the learning activity', ()
 });
 
 test('Renato path guides through the cards, saves a graph, and exports comparable responses', () => {
-  seedAllocation([ActivityPath.RENATO, ActivityPath.RENATO, ActivityPath.CLASSIC, ActivityPath.CLASSIC]);
   const { unmount } = render(<App />);
   typeInto(screen.getByPlaceholderText('הכנס קוד משתתף/ת'), 'R-S01');
+  choosePath('מסלול רנאטו');
   click('התחל/י');
 
   expect(screen.getByRole('heading', { name: 'בוחן מקדים' })).toBeInTheDocument();

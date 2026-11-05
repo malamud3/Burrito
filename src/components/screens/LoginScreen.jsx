@@ -5,11 +5,12 @@ import { useNotification } from '../../context/NotificationContext';
 import { usePhaseNavigation } from '../../hooks/usePhaseNavigation';
 import { ActivityPath, LogActionType, Mode } from '../../core/types/enums';
 import { STUDY_DURATION_MINUTES } from '../../core/constants/study';
-import { assignStudyPath } from '../../services/StudyAllocationService';
+import { recordStudyPathChoice } from '../../services/StudyAllocationService';
 
 export default function LoginScreen() {
   const [studentId, setStudentId] = useState('');
   const [mode, setMode] = useState(Mode.STUDENT);
+  const [selectedPath, setSelectedPath] = useState('');
   const { initSession } = useSessionContext();
   const { addLog } = useLogContext();
   const { goToPreAssessment, goToDashboard } = usePhaseNavigation();
@@ -18,28 +19,29 @@ export default function LoginScreen() {
   const handleStart = () => {
     if (!studentId.trim()) return show('נא להזין קוד תלמיד/ה', '⚠️');
     const participantId = studentId.trim();
-    let activityPath = ActivityPath.CLASSIC;
-    let allocation = null;
+    let activityPath = selectedPath || ActivityPath.CLASSIC;
+    let pathChoice = null;
     if (mode === Mode.STUDENT) {
+      if (!selectedPath) return show('נא לבחור מסלול למידה', '⚠️');
       try {
-        const result = assignStudyPath(participantId);
+        const result = recordStudyPathChoice(participantId, selectedPath);
         if (result.duplicate) {
-          return show('קוד המשתתף/ת כבר הוקצה. אין להשתמש בו שוב במחקר.', '⚠️');
+          return show('קוד המשתתף/ת כבר השתתף/ה. אין להשתמש בו שוב במחקר.', '⚠️');
         }
-        ({ activityPath, ...allocation } = result.assignment);
+        ({ activityPath, ...pathChoice } = result.assignment);
       } catch (error) {
-        return show(error.message || 'לא ניתן לבצע הקצאה. נתוני המחקר לא שונו.', '⚠️');
+        return show(error.message || 'לא ניתן לשמור את בחירת המסלול.', '⚠️');
       }
     }
 
-    const sessionId = initSession(participantId, activityPath, mode, allocation);
+    const sessionId = initSession(participantId, activityPath, mode, pathChoice);
     addLog(LogActionType.ACTIVITY_START, {
       schemaVersion: 1,
       studentId: participantId,
       sessionId,
       activityPath,
       mode,
-      ...(allocation || {}),
+      ...(pathChoice || {}),
       studyDurationMinutes: mode === Mode.STUDENT ? STUDY_DURATION_MINUTES : null,
     });
 
@@ -80,13 +82,44 @@ export default function LoginScreen() {
         </div>
 
         {mode === Mode.STUDENT && (
-          <div className="login-research-notice" role="note">
-            <strong>המסלול יוקצה אוטומטית</strong>
-            <span>
-              ההקצאה מאוזנת באקראי בבלוקים. שני המסלולים מוגבלים ל־
-              {STUDY_DURATION_MINUTES} דקות, עם אותם כלי שרטוט ומדיניות עזרה.
-            </span>
-          </div>
+          <>
+            <fieldset className="login-path-picker">
+              <legend>בחר/י מסלול למידה</legend>
+              <label className="login-path-option">
+                <input
+                  type="radio"
+                  name="activityPath"
+                  value={ActivityPath.CLASSIC}
+                  checked={selectedPath === ActivityPath.CLASSIC}
+                  onChange={(event) => setSelectedPath(event.target.value)}
+                />
+                <span>
+                  <strong>המסלול הקלאסי</strong>
+                  <span>חקירת הפונקציה באמצעות שאלות ישירות</span>
+                </span>
+              </label>
+              <label className="login-path-option">
+                <input
+                  type="radio"
+                  name="activityPath"
+                  value={ActivityPath.RENATO}
+                  checked={selectedPath === ActivityPath.RENATO}
+                  onChange={(event) => setSelectedPath(event.target.value)}
+                />
+                <span>
+                  <strong>מסלול רנאטו</strong>
+                  <span>חקירה באמצעות ארבע כרטיסיות חשיבה חישובית</span>
+                </span>
+              </label>
+            </fieldset>
+            <div className="login-research-notice" role="note">
+              <strong>מהלך המחקר</strong>
+              <span>
+                לפני הלמידה יופיע בוחן מקדים. שני המסלולים מוגבלים ל־
+                {STUDY_DURATION_MINUTES} דקות, עם אותם כלי שרטוט ומדיניות עזרה.
+              </span>
+            </div>
+          </>
         )}
 
         <div className="btn-group login-actions">

@@ -10,20 +10,37 @@ import React, {
   useCallback,
   useMemo,
   useEffect,
+  useRef,
 } from 'react';
-import { Phase } from '../core/types/enums';
+import { ActivityPath, LogActionType, Phase } from '../core/types/enums';
 import { PHASE_ORDER } from '../core/constants/phases';
+import { getPhaseFromPath, PHASE_PATHS } from '../core/constants/routes';
 import { useSessionContext } from './SessionContext';
+import { useLogContext } from './LogContext';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 const PhaseContext = createContext(null);
 const STORAGE_KEY = 'ctAdapt.phase';
 
-const readStoredPhase = () => {
+const readStoredPhase = (activityPath) => {
   if (typeof window === 'undefined' || !window.localStorage) return Phase.LOGIN;
 
   try {
     const storedPhase = window.localStorage.getItem(STORAGE_KEY);
-    return Object.values(Phase).includes(storedPhase) ? storedPhase : Phase.LOGIN;
+    if ([Phase.LOGIN, Phase.DASHBOARD, Phase.COMPLETION, Phase.PRE_ASSESSMENT].includes(storedPhase)) {
+      return storedPhase;
+    }
+    if (storedPhase === Phase.TRANSFER_EXAM) return storedPhase;
+    if (activityPath === ActivityPath.RENATO) {
+      return [
+        Phase.RENATO,
+        Phase.RENATO_ASYMPTOTES,
+        Phase.RENATO_INTERCEPTS,
+        Phase.RENATO_EXTREMA,
+        Phase.RENATO_GRAPH,
+      ].includes(storedPhase) ? storedPhase : Phase.RENATO;
+    }
+    return Phase.CLASSIC;
   } catch (error) {
     console.warn('Failed to restore phase from localStorage', error);
     return Phase.LOGIN;
@@ -32,10 +49,37 @@ const readStoredPhase = () => {
 
 export function PhaseProvider({ children }) {
   const { session } = useSessionContext();
+  const { addLog } = useLogContext();
+  const location = useLocation();
+  const navigate = useNavigate();
   const [currentPhase, setCurrentPhase] = useState(() =>
-    session.isActive ? readStoredPhase() : Phase.LOGIN,
+    session.isActive
+      ? getPhaseFromPath(location.pathname) || readStoredPhase(session.activityPath)
+      : Phase.LOGIN,
   );
   const [phaseHistory, setPhaseHistory] = useState([currentPhase]);
+
+  useEffect(() => {
+    const routePhase = getPhaseFromPath(location.pathname);
+    if (routePhase && routePhase !== currentPhase) {
+      addLog(LogActionType.PHASE_CHANGE, {
+        from: currentPhase,
+        to: routePhase,
+        studentId: session.studentId,
+        sessionId: session.sessionId,
+        activityPath: session.activityPath,
+      });
+      setCurrentPhase(routePhase);
+      setPhaseHistory((previous) => [...previous, routePhase]);
+    }
+  }, [
+    location.pathname,
+    currentPhase,
+    addLog,
+    session.studentId,
+    session.sessionId,
+    session.activityPath,
+  ]);
 
   useEffect(() => {
     if (typeof window === 'undefined' || !window.localStorage) return;
@@ -48,10 +92,13 @@ export function PhaseProvider({ children }) {
   }, [currentPhase, session.isActive]);
 
   const navigateTo = useCallback((phase) => {
+    const path = PHASE_PATHS[phase];
+    if (!path) throw new Error(`No route is registered for phase "${phase}"`);
     setCurrentPhase(phase);
     setPhaseHistory((prev) => [...prev, phase]);
+    navigate(path);
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, []);
+  }, [navigate]);
 
   const navigateNext = useCallback(() => {
     const index = PHASE_ORDER.indexOf(currentPhase);

@@ -5,6 +5,8 @@
 
 export const Phase = Object.freeze({
   LOGIN: 'login',
+  PRE_ASSESSMENT: 'pre-assessment',
+  CLASSIC: 'classic',
   PROBLEM: 'problem',
   SOLVING: 'solving',
   DIFFICULTY: 'difficulty',
@@ -13,12 +15,17 @@ export const Phase = Object.freeze({
   TRANSFER: 'transfer',
   EFFORT: 'effort',
   RENATO: 'renato',
+  RENATO_ASYMPTOTES: 'renato-asymptotes',
+  RENATO_INTERCEPTS: 'renato-intercepts',
+  RENATO_EXTREMA: 'renato-extrema',
+  RENATO_GRAPH: 'renato-graph',
+  TRANSFER_EXAM: 'transfer-exam',
   COMPLETION: 'completion',
   DASHBOARD: 'dashboard',
 });
 
 export const ActivityPath = Object.freeze({
-  CT_ADAPT: 'ct-adapt',
+  CLASSIC: 'classic',
   RENATO: 'renato',
 });
 
@@ -53,6 +60,11 @@ export const HintLevel = Object.freeze({
 
 export const LogActionType = Object.freeze({
   PHASE_CHANGE: 'phase_change',
+  ACTIVITY_START: 'activity_start',
+  PRE_ASSESSMENT_START: 'pre_assessment_start',
+  PRE_ASSESSMENT_SUBMIT: 'pre_assessment_submit',
+  LEARNING_START: 'learning_start',
+  ACTIVITY_COMPLETE: 'activity_complete',
   TOOL_INTERACTION: 'tool_interaction',
   EDIT: 'edit',
   SUBMIT: 'submit',
@@ -64,6 +76,8 @@ export const LogActionType = Object.freeze({
   ANSWER_SUBMIT: 'answer_submit',
   CORRECTION_SUBMIT: 'correction_submit',
   TRANSFER_SUBMIT: 'transfer_submit',
+  TRANSFER_ASSESSMENT_START: 'transfer_assessment_start',
+  TIME_LIMIT_REACHED: 'time_limit_reached',
   EFFORT_RATING: 'effort_rating',
   STEP_ADD: 'step_add',
   STEP_REMOVE: 'step_remove',

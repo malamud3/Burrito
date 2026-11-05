@@ -21,13 +21,22 @@ const emptySummary = () => ({
 export function computeSessionSummary(logs) {
   if (!logs.length) return emptySummary();
 
-  const first = logs[0].timestamp;
-  const last = logs[logs.length - 1].timestamp;
+  const sessionTimes = new Map();
+  logs.forEach((entry) => {
+    const sessionId = entry.data?.sessionId || 'unassigned';
+    const range = sessionTimes.get(sessionId) || { first: entry.timestamp, last: entry.timestamp };
+    range.first = Math.min(range.first, entry.timestamp);
+    range.last = Math.max(range.last, entry.timestamp);
+    sessionTimes.set(sessionId, range);
+  });
   const ofType = (type) => logs.filter((l) => l.actionType === type);
 
   return {
     totalActions: logs.length,
-    totalDurationSeconds: Math.round((last - first) / 1000),
+    totalDurationSeconds: Array.from(sessionTimes.values()).reduce(
+      (total, range) => total + Math.round((range.last - range.first) / 1000),
+      0,
+    ),
     actionsByType: countBy(logs, 'actionType'),
     actionsBySkill: countBy(
       logs.filter((l) => l.skill),
@@ -69,19 +78,51 @@ export function computeToolEngagement(logs) {
  * The last phase is measured up to the latest log entry.
  */
 export function computePhaseDurations(logs) {
-  const changes = logs.filter((l) => l.actionType === LogActionType.PHASE_CHANGE);
-  if (!changes.length) return [];
-
-  const endTs = logs[logs.length - 1].timestamp;
-
-  return changes.map((change, i) => {
-    const next = changes[i + 1];
-    const until = next ? next.timestamp : endTs;
-    return {
-      phase: change.data?.to,
-      seconds: Math.max(0, Math.round((until - change.timestamp) / 1000)),
-    };
+  const bySession = new Map();
+  logs.forEach((entry) => {
+    const key = entry.data?.sessionId || 'unassigned';
+    const entries = bySession.get(key) || [];
+    entries.push(entry);
+    bySession.set(key, entries);
   });
+
+  return Array.from(bySession.values()).flatMap((sessionLogs) => {
+    const changes = sessionLogs.filter((l) => l.actionType === LogActionType.PHASE_CHANGE);
+    const endTs = sessionLogs[sessionLogs.length - 1]?.timestamp;
+    return changes.map((change, index) => {
+      const next = changes[index + 1];
+      const until = next ? next.timestamp : endTs;
+      return {
+        phase: change.data?.to,
+        seconds: Math.max(0, Math.round((until - change.timestamp) / 1000)),
+      };
+    });
+  });
+}
+
+export function computeLearningDurations(logs) {
+  const starts = new Map();
+  const durations = [];
+  logs.forEach((entry) => {
+    const sessionId = entry.data?.sessionId;
+    if (!sessionId) return;
+    if (entry.actionType === LogActionType.LEARNING_START) {
+      starts.set(sessionId, entry.data.startedAt || entry.timestamp);
+    }
+    if (entry.actionType === LogActionType.LEARNING_COMPLETE) {
+      const startedAt = starts.get(sessionId);
+      if (startedAt) {
+        durations.push({
+          sessionId,
+          activityPath: entry.data.activityPath || '',
+          seconds: Math.max(0, Math.round((entry.timestamp - startedAt) / 1000)),
+          reason: entry.data.reason || 'completed',
+        });
+        starts.delete(sessionId);
+      }
+    }
+  });
+  return durations;
 }
 
 export function getDetectionEvents(logs) {

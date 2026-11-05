@@ -44,7 +44,7 @@ export default function ReturnScreen() {
   }, [canEscalate, escalate, show]);
 
   return (
-    <div className="container">
+    <div className="container learning-screen return-screen">
       <ProgressBar />
 
       <div className="card" style={{ textAlign: 'center', padding: 24 }}>

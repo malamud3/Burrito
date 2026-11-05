@@ -13,7 +13,7 @@ export default function DifficultyScreen() {
     : null;
 
   return (
-    <div className="container">
+    <div className="container learning-screen difficulty-screen">
       <ProgressBar />
 
       <div className="card" style={{ textAlign: 'center', padding: 40 }}>

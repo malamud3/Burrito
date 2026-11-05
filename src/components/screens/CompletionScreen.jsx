@@ -5,7 +5,7 @@ import { usePhaseNavigation } from '../../hooks/usePhaseNavigation';
 import { useLogExport } from '../../hooks/useLogExport';
 import { computeSessionSummary } from '../../services/LogAnalyticsService';
 import { formatTime } from '../../core/utils/timeFormatter';
-import { Group } from '../../core/types/enums';
+import { ActivityPath } from '../../core/types/enums';
 import ProgressBar from '../layout/ProgressBar';
 
 export default function CompletionScreen() {
@@ -14,18 +14,23 @@ export default function CompletionScreen() {
   const { goToDashboard } = usePhaseNavigation();
   const { exportJSON } = useLogExport();
 
-  const summary = useMemo(() => computeSessionSummary(logs), [logs]);
+  const sessionLogs = useMemo(
+    () => logs.filter((entry) => entry.data?.sessionId === session.sessionId),
+    [logs, session.sessionId],
+  );
+  const summary = useMemo(() => computeSessionSummary(sessionLogs), [sessionLogs]);
 
   const rows = [
     ['קוד תלמיד/ה', session.studentId],
-    ['קבוצה', session.group === Group.ADAPTIVE ? 'אדפטיבית' : 'קבועה'],
+    ['מסלול', session.activityPath === ActivityPath.RENATO ? 'רנאטו סאיג — חשיבה חישובית' : 'קלאסי'],
+    ['בוחן מקדים', session.preAssessmentSubmittedAt ? 'הוגש' : 'לא הוגש'],
+    ['בוחן העברה', sessionLogs.some((entry) => entry.actionType === 'transfer_submit') ? 'הוגש' : 'לא הוגש'],
     ['משך הפעילות', formatTime(summary.totalDurationSeconds)],
     ['פעולות שנרשמו', summary.totalActions],
-    ['רמזים שנדרשו', summary.hintEscalations],
   ];
 
   return (
-    <div className="container">
+    <div className="container learning-screen completion-screen">
       <ProgressBar />
       <div
         className="card"

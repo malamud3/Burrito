@@ -1,133 +1,198 @@
 import React from 'react';
-import { render, screen, fireEvent, act, within } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import App from '../src/app/App';
 import AppProviders from '../src/context/AppProviders';
 import { useSessionContext } from '../src/context/SessionContext';
 import { useLogContext } from '../src/context/LogContext';
+import { ALLOCATION_STORAGE_KEY, STUDY_DURATION_SECONDS } from '../src/core/constants/study';
+import { ActivityPath } from '../src/core/types/enums';
 
 const click = (name) => fireEvent.click(screen.getByRole('button', { name: new RegExp(name) }));
-const typeInto = (el, value) => fireEvent.change(el, { target: { value } });
+const typeInto = (element, value) => fireEvent.change(element, { target: { value } });
+const drawOnGraph = () => {
+  const graphBoard = screen.getByRole('img', { name: /לוח שרטוט הפונקציה/ });
+  graphBoard.getBoundingClientRect = () => ({
+    left: 0,
+    top: 0,
+    width: 700,
+    height: 420,
+    right: 700,
+    bottom: 420,
+  });
+  fireEvent.pointerDown(graphBoard, { clientX: 100, clientY: 100, button: 0, pointerId: 1 });
+  fireEvent.pointerMove(graphBoard, { clientX: 150, clientY: 140, pointerId: 1 });
+  fireEvent.pointerUp(graphBoard, { clientX: 150, clientY: 140, pointerId: 1 });
+};
+const seedAllocation = (paths) => {
+  localStorage.setItem(ALLOCATION_STORAGE_KEY, JSON.stringify({
+    schemaVersion: 1,
+    nextIndex: 0,
+    sequence: paths.map((activityPath, index) => ({
+      activityPath,
+      blockNumber: 1,
+      positionInBlock: index + 1,
+    })),
+    participants: {},
+  }));
+};
+const fillTransferAssessment = () => {
+  [
+    'א. מצאו את תחום ההגדרה.',
+    'ב. מצאו את הנגזרת.',
+    'ג. מצאו את ערכי x החשודים כנקודות קיצון.',
+    'ד. מצאו וסווגו את נקודות הקיצון.',
+    'ה. מצאו את האסימפטוטות האנכיות.',
+    'ו. מצאו את האסימפטוטה האופקית.',
+    'ז. מצאו את נקודת החיתוך עם ציר y.',
+    'ח. מצאו את נקודת החיתוך עם ציר x.',
+    'ט. קבעו את סימן הנגזרת ואת תחומי העלייה והירידה.',
+    'י. שרטטו סקיצה של הגרף וציינו את המאפיינים שסימנתם.',
+  ].forEach((label, index) => {
+    typeInto(screen.getByLabelText(label), `תשובת בוחן ${index + 1}`);
+  });
+};
+const fillPreAssessment = () => {
+  [
+    'א. מצאו את תחום ההגדרה.',
+    'ב. מצאו את הנגזרת.',
+    'ג. מצאו את ערכי x החשודים כנקודות קיצון.',
+    'ד. מצאו וסווגו את נקודות הקיצון.',
+    'ה. מצאו את האסימפטוטות האנכיות.',
+    'ו. מצאו את האסימפטוטה האופקית.',
+    'ז. מצאו את נקודת החיתוך עם ציר y.',
+    'ח. מצאו את נקודת החיתוך עם ציר x.',
+    'ט. קבעו את סימן הנגזרת ואת תחומי העלייה והירידה.',
+    'י. שרטטו סקיצה של הגרף וציינו את המאפיינים שסימנתם.',
+  ].forEach((label, index) => {
+    typeInto(screen.getByLabelText(label), `תשובת קדם ${index + 1}`);
+  });
+  click('הגשת הבוחן והתחלת הלמידה');
+};
 
-beforeEach(() => localStorage.clear());
+beforeEach(() => {
+  localStorage.clear();
+  window.history.replaceState({}, '', '/');
+});
 
-test('full adaptive student flow with help request → analog → hints → transfer → effort → completion', async () => {
-  vi.useFakeTimers();
+test('classic path presents direct math questions and saves comparable responses', () => {
+  seedAllocation([ActivityPath.CLASSIC, ActivityPath.CLASSIC, ActivityPath.RENATO, ActivityPath.RENATO]);
   render(<App />);
-
-  // login validation
-  click('התחל/י');
-  expect(screen.getByText('נא להזין קוד תלמיד/ה')).toBeInTheDocument();
-
-  typeInto(screen.getByPlaceholderText('הכנס קוד משתתף/ת'), 'S01');
-  const [groupSel] = screen.getAllByRole('combobox');
-  typeInto(groupSel, 'adaptive');
+  typeInto(screen.getByPlaceholderText('הכנס קוד משתתף/ת'), 'C01');
   click('התחל/י');
 
-  // problem → solving
-  click('מוכן/ה להתחיל לפתור');
-  expect(screen.getByText('פירוק הבעיה לתתי-משימות')).toBeInTheDocument();
-  expect(screen.getByText('זיהוי המידע הרלוונטי')).toBeInTheDocument();
-  expect(screen.getAllByRole('combobox').length).toBe(7); // abstraction rows seeded
+  expect(screen.getByRole('heading', { name: 'בוחן מקדים' })).toBeInTheDocument();
+  expect(screen.getByRole('math', { name: 'h(x) = x² / (x² − 8x + 15)' })).toBeInTheDocument();
+  fillPreAssessment();
+  expect(screen.getByRole('heading', { name: 'חקירת פונקציה' })).toBeInTheDocument();
+  expect(screen.getByText('f(x) = x² / (x² − 4x + 3)')).toBeInTheDocument();
+  expect(screen.getByLabelText('א. מצאו את תחום ההגדרה של הפונקציה.')).toBeInTheDocument();
+  expect(screen.queryByRole('heading', { name: 'תחום ההגדרה' })).not.toBeInTheDocument();
+  expect(screen.queryByRole('heading', { name: 'ארבע כרטיסיות חקירת הפונקציה' })).not.toBeInTheDocument();
+  expect(screen.getByRole('img', { name: /לוח שרטוט הפונקציה/ })).toBeInTheDocument();
+  expect(screen.getByText(/לרשותכם 30 דקות/)).toBeInTheDocument();
 
-  // mark 3 wrong in abstraction (relevant rows marked "לא") → detection on submit
-  const selects = screen.getAllByRole('combobox');
-  [0, 1, 2].forEach((i) => typeInto(selects[i], 'לא'));
-  typeInto(screen.getByPlaceholderText('כתוב/י כאן את הפתרון שלך...'), 'תשובה שגויה');
-  click('שלח/י תשובה');
-  expect(screen.getByText('המערכת זיהתה נקודה שכדאי לחזק')).toBeInTheDocument();
+  typeInto(screen.getByLabelText('א. מצאו את תחום ההגדרה של הפונקציה.'), 'x ≠ 1, x ≠ 3');
+  typeInto(screen.getByLabelText('ה. מצאו את האסימפטוטות האנכיות.'), 'x=1, x=3');
+  typeInto(screen.getByLabelText('ו. מצאו את האסימפטוטה האופקית.'), 'y=1');
+  fireEvent.click(screen.getByRole('button', { name: '✏️ שרטוט ביד חופשית' }));
+  drawOnGraph();
+  click('סיימתי את חקירת הפונקציה');
 
-  act(() => { vi.advanceTimersByTime(1600); });
-  expect(screen.getByText(/נראה שיש קושי בזיהוי הנתונים החשובים/)).toBeInTheDocument();
-
-  click('בוא/י נתחיל');
-  expect(screen.getByText('משימת תמיכה — הפשטה')).toBeInTheDocument(); // adaptive → abstraction analog
-
-  // empty analog answer blocked
-  click('סיימתי את המשימה');
-  expect(screen.getByText('נא לכתוב תשובה לפני המשך')).toBeInTheDocument();
-  typeInto(screen.getByPlaceholderText('כתוב/י את הפתרון...'), 'פתרון אנלוגי');
-  click('סיימתי את המשימה');
-
-  // return screen with graduated hints
-  expect(screen.getByRole('heading', { name: '🔁 חזרה לבעיה המקורית' })).toBeInTheDocument();
-  expect(screen.getByText('רמה 0 — ללא רמז')).toBeInTheDocument();
-  click('אני צריך/ה רמז נוסף');
-  expect(screen.getByText(/האם גם כאן יש נתונים שמסיחים/)).toBeInTheDocument();
-  click('אני צריך/ה רמז נוסף');
-  expect(screen.getByText(/שמות, טלפונים, שעות/)).toBeInTheDocument();
-  expect(screen.getByRole('button', { name: /אני צריך\/ה רמז נוסף/ })).toBeDisabled();
-
-  typeInto(screen.getByPlaceholderText('הפתרון המתוקן שלי...'), 'מתוקן');
-  click('שלח/י תשובה מתוקנת');
-
-  // transfer
-  typeInto(screen.getByPlaceholderText('כתוב/י את הפתרון המלא...'), 'פתרון העברה');
-  click('שלח/י ועבור/י לדירוג מאמץ');
-
-  // effort: 3 scales (analog included)
-  expect(screen.getByRole('heading', { name: '📊 משימת התמיכה האנלוגית' })).toBeInTheDocument();
-  expect(screen.getByRole('button', { name: /סיום/ })).toBeDisabled();
-  const scales = document.querySelectorAll('.effort-scale');
-  expect(scales.length).toBe(3);
-  scales.forEach((s) => fireEvent.click(within(s).getByText('5')));
-  click('סיום');
-
+  expect(screen.getByRole('heading', { name: 'בוחן העברה' })).toBeInTheDocument();
+  expect(screen.getByRole('math', { name: 'g(x) = x² / (x² − 6x + 8)' })).toBeInTheDocument();
+  click('הגשת הבוחן וסיום');
+  expect(screen.getByText('יש להשלים את כל סעיפי הבוחן לפני ההגשה.')).toBeInTheDocument();
+  fillTransferAssessment();
+  click('הגשת הבוחן וסיום');
   expect(screen.getByText('סיימת! תודה רבה!')).toBeInTheDocument();
-  click('צפייה בנתונים');
-  expect(screen.getByRole('heading', { name: '📊 לוח בקרה — חוקר/ת' })).toBeInTheDocument();
-  expect(screen.getByText(/difficulty_detected/)).toBeInTheDocument();
-  fireEvent.click(screen.getByRole('tab', { name: 'זיהוי קשיים' }));
-  expect(screen.getByText('אירועי זיהוי')).toBeInTheDocument();
-  vi.useRealTimers();
+  expect(screen.getByText('קלאסי')).toBeInTheDocument();
+  const savedSession = JSON.parse(localStorage.getItem('ctAdapt.session'));
+  expect(savedSession.activityPath).toBe('classic');
+  expect(savedSession.classicWork.domain).toBe('x ≠ 1, x ≠ 3');
+  expect(savedSession.classicWork.verticalAsymptotes).toBe('x=1, x=3');
+  expect(savedSession.classicWork.horizontalAsymptote).toBe('y=1');
+  const logs = JSON.parse(localStorage.getItem('ctAdapt.logs'));
+  const start = logs.find(({ actionType }) => actionType === 'activity_start');
+  const preSubmit = logs.find(({ actionType }) => actionType === 'pre_assessment_submit');
+  const complete = logs.find(({ actionType }) => actionType === 'activity_complete');
+  expect(start.data).toMatchObject({
+    studentId: 'C01',
+    activityPath: 'classic',
+    mode: 'student',
+    method: 'balanced_randomized_blocks',
+    allocationIndex: 1,
+    blockNumber: 1,
+    studyDurationMinutes: 30,
+  });
+  expect(start.data.sessionId).toBeTruthy();
+  expect(preSubmit.data).toMatchObject({
+    functionExpression: 'x² / (x² − 8x + 15)',
+    assessment: { domain: 'תשובת קדם 1' },
+  });
+  expect(complete.data.activityPath).toBe('classic');
+  expect(complete.data.sessionId).toBe(start.data.sessionId);
+  expect(complete.data.assessment).toMatchObject({
+    domain: 'x ≠ 1, x ≠ 3',
+    verticalAsymptotes: 'x=1, x=3',
+    horizontalAsymptote: 'y=1',
+  });
+  const transferSubmit = logs.find(({ actionType }) => actionType === 'transfer_submit');
+  expect(transferSubmit.data).toMatchObject({
+    activityPath: 'classic',
+    functionExpression: 'x² / (x² − 6x + 8)',
+  });
+  expect(Object.keys(transferSubmit.data.assessment)).toHaveLength(10);
 });
 
-test('help request with no rule fired still routes to an analog task', () => {
-  vi.useFakeTimers();
-  render(<App />);
-  typeInto(screen.getByPlaceholderText('הכנס קוד משתתף/ת'), 'S02');
-  typeInto(screen.getAllByRole('combobox')[0], 'fixed');
-  click('התחל/י');
-  click('מוכן/ה להתחיל לפתור');
-  click('אני צריך/ה עזרה');
-  act(() => { vi.advanceTimersByTime(1100); });
-  expect(screen.getByText('המערכת זיהתה נקודה שכדאי לחזק')).toBeInTheDocument();
-  click('בוא/י נתחיל');
-  // fixed group → rotation index 0 → decomposition task regardless of skill
-  expect(screen.getByText('משימת תמיכה — פירוק')).toBeInTheDocument();
-  vi.useRealTimers();
-});
-
-test('clean answer with no difficulty skips straight to transfer', () => {
-  render(<App />);
-  typeInto(screen.getByPlaceholderText('הכנס קוד משתתף/ת'), 'S03');
-  typeInto(screen.getAllByRole('combobox')[0], 'adaptive');
-  click('התחל/י');
-  click('מוכן/ה להתחיל לפתור');
-  typeInto(screen.getByPlaceholderText('כתוב/י כאן את הפתרון שלך...'), 'פתרון');
-  click('שלח/י תשובה');
-  expect(screen.getByRole('heading', { name: '🚀 משימה חדשה' })).toBeInTheDocument();
-});
-
-test('researcher mode opens the dashboard with empty-state', () => {
+test('researcher mode opens the dashboard without assigning a participant', () => {
   render(<App />);
   typeInto(screen.getByPlaceholderText('הכנס קוד משתתף/ת'), 'R1');
-  const [groupSel, modeSel] = screen.getAllByRole('combobox');
-  typeInto(groupSel, 'adaptive');
-  typeInto(modeSel, 'researcher');
+  typeInto(screen.getByLabelText('מצב'), 'researcher');
   click('התחל/י');
+
   expect(screen.getByRole('heading', { name: '📊 לוח בקרה — חוקר/ת' })).toBeInTheDocument();
+  expect(screen.getByText('משתתפים שהוקצו')).toBeInTheDocument();
+  expect(screen.queryByRole('tab', { name: 'זיהוי קשיים' })).not.toBeInTheDocument();
 });
 
-test('session and logs restore from localStorage after reload', () => {
+test('pre-assessment must be completed before learning begins', () => {
+  seedAllocation([ActivityPath.CLASSIC, ActivityPath.CLASSIC, ActivityPath.RENATO, ActivityPath.RENATO]);
+  render(<App />);
+  typeInto(screen.getByPlaceholderText('הכנס קוד משתתף/ת'), 'PRE01');
+  click('התחל/י');
+
+  expect(screen.getByRole('heading', { name: 'בוחן מקדים' })).toBeInTheDocument();
+  click('הגשת הבוחן והתחלת הלמידה');
+  expect(screen.getByText('יש להשלים את כל סעיפי הבוחן המקדים לפני ההמשך.')).toBeInTheDocument();
+  expect(screen.queryByRole('heading', { name: 'חקירת פונקציה' })).not.toBeInTheDocument();
+});
+
+test('starting another participant preserves previous participant logs', () => {
+  seedAllocation([ActivityPath.CLASSIC, ActivityPath.CLASSIC, ActivityPath.RENATO, ActivityPath.RENATO]);
+  render(<App />);
+  typeInto(screen.getByPlaceholderText('הכנס קוד משתתף/ת'), 'P01');
+  click('התחל/י');
+  window.history.replaceState({}, '', '/login');
+  fireEvent.popState(window);
+  typeInto(screen.getByPlaceholderText('הכנס קוד משתתף/ת'), 'P02');
+  click('התחל/י');
+
+  const starts = JSON.parse(localStorage.getItem('ctAdapt.logs'))
+    .filter(({ actionType }) => actionType === 'activity_start');
+  expect(starts).toHaveLength(2);
+  expect(starts.map(({ data }) => data.allocationIndex)).toEqual([1, 2]);
+});
+
+test('session and logs restore from localStorage', () => {
   localStorage.setItem('ctAdapt.session', JSON.stringify({
     studentId: 'S99',
-    group: 'adaptive',
+    activityPath: 'classic',
     mode: 'student',
     isActive: true,
-    answers: { main: 'saved answer' },
+    classicWork: { domain: 'answer saved' },
   }));
   localStorage.setItem('ctAdapt.logs', JSON.stringify([
-    { id: 'log-1', actionType: 'edit', skill: 'decomposition', data: { value: 'saved' } },
+    { id: 'log-1', actionType: 'edit', data: { value: 'saved' } },
   ]));
 
   function SessionProbe() {
@@ -136,87 +201,172 @@ test('session and logs restore from localStorage after reload', () => {
     return (
       <div>
         <span data-testid="student-id">{session.studentId}</span>
+        <span data-testid="classic-domain">{session.classicWork.domain}</span>
         <span data-testid="log-count">{logs.length}</span>
       </div>
     );
   }
 
-  render(
-    <AppProviders>
-      <SessionProbe />
-    </AppProviders>,
-  );
-
+  render(<AppProviders><SessionProbe /></AppProviders>);
   expect(screen.getByTestId('student-id')).toHaveTextContent('S99');
+  expect(screen.getByTestId('classic-domain')).toHaveTextContent('answer saved');
   expect(screen.getByTestId('log-count')).toHaveTextContent('1');
 });
 
-test('active session resumes at its last phase after reload', () => {
+test('a saved legacy adaptive phase resumes in the classic path', () => {
   localStorage.setItem('ctAdapt.session', JSON.stringify({
     studentId: 'S100',
-    group: 'adaptive',
+    activityPath: 'ct-adapt',
     mode: 'student',
     isActive: true,
-    answers: { main: 'תשובה שנשמרה' },
   }));
   localStorage.setItem('ctAdapt.phase', 'solving');
 
   render(<App />);
-
-  expect(screen.getByPlaceholderText('כתוב/י כאן את הפתרון שלך...')).toHaveValue('תשובה שנשמרה');
+  expect(screen.getByRole('heading', { name: 'חקירת פונקציה' })).toBeInTheDocument();
   expect(screen.queryByPlaceholderText('הכנס קוד משתתף/ת')).not.toBeInTheDocument();
 });
 
-test('Renato path opens its four-card function worksheet and persists its work', () => {
+test('a session cannot switch study paths by opening the other path URL', () => {
+  const now = Date.now();
+  localStorage.setItem('ctAdapt.session', JSON.stringify({
+    studentId: 'C02',
+    sessionId: 'session-C02',
+    activityPath: 'classic',
+    mode: 'student',
+    isActive: true,
+    startTime: now,
+    allocation: { method: 'balanced_randomized_blocks', allocationIndex: 1 },
+    preAssessmentSubmittedAt: now,
+    learningStartedAt: now,
+  }));
+  window.history.replaceState({}, '', '/renato/domain');
+
+  render(<App />);
+  expect(screen.getByRole('heading', { name: 'חקירת פונקציה' })).toBeInTheDocument();
+  expect(screen.queryByRole('heading', { name: 'כלי עזר לחקירת פונקציות' })).not.toBeInTheDocument();
+});
+
+test('opening the transfer route directly cannot skip the learning activity', () => {
+  const now = Date.now();
+  localStorage.setItem('ctAdapt.session', JSON.stringify({
+    studentId: 'C03',
+    sessionId: 'session-no-skip',
+    activityPath: 'classic',
+    mode: 'student',
+    isActive: true,
+    startTime: now,
+    allocation: { method: 'balanced_randomized_blocks', allocationIndex: 1 },
+  }));
+  window.history.replaceState({}, '', '/transfer-test');
+
+  render(<App />);
+
+  expect(screen.getByRole('heading', { name: 'בוחן מקדים' })).toBeInTheDocument();
+  expect(screen.queryByRole('heading', { name: 'בוחן העברה' })).not.toBeInTheDocument();
+});
+
+test('Renato path guides through the cards, saves a graph, and exports comparable responses', () => {
+  seedAllocation([ActivityPath.RENATO, ActivityPath.RENATO, ActivityPath.CLASSIC, ActivityPath.CLASSIC]);
   const { unmount } = render(<App />);
   typeInto(screen.getByPlaceholderText('הכנס קוד משתתף/ת'), 'R-S01');
-  typeInto(screen.getAllByRole('combobox')[0], 'adaptive');
-  typeInto(screen.getByLabelText('מסלול פעילות'), 'renato');
   click('התחל/י');
 
+  expect(screen.getByRole('heading', { name: 'בוחן מקדים' })).toBeInTheDocument();
+  fillPreAssessment();
   expect(screen.getByRole('heading', { name: 'כלי עזר לחקירת פונקציות' })).toBeInTheDocument();
-  expect(screen.getByRole('heading', { name: 'תחום ההגדרה' })).toBeInTheDocument();
-  expect(screen.getByRole('heading', { name: 'נקודות החשודות כנקודות קיצון' })).toBeInTheDocument();
-  expect(screen.getByRole('heading', { name: 'אסימפטוטות מקבילות לצירים' })).toBeInTheDocument();
-  expect(screen.getByRole('heading', { name: 'נקודות חיתוך עם הצירים' })).toBeInTheDocument();
+  expect(screen.getByRole('math', { name: 'f(x) = x² / (x² − 4x + 3)' })).toBeInTheDocument();
+  expect(screen.getByText(/לרשותכם 30 דקות/)).toBeInTheDocument();
+  typeInto(screen.getByLabelText('תחום ההגדרה שמצאת'), 'x ≠ 1, x ≠ 3');
+  click('המשך/י לרמז הבא');
 
-  expect(screen.getByText('f(x) = x² / (x² − 4x + 3)')).toBeInTheDocument();
-  fireEvent.click(screen.getAllByRole('button', { name: 'חשב והזן' })[0]);
+  expect(screen.getByRole('heading', { name: 'אסימפטוטות מקבילות לצירים' })).toBeInTheDocument();
+  typeInto(screen.getByLabelText('אסימפטוטות אנכיות'), 'x = 1, x = 3');
+  typeInto(screen.getByLabelText('אסימפטוטה אופקית'), 'y = 1');
+  click('המשך/י לרמז הבא');
+
+  expect(screen.getByRole('heading', { name: 'נקודות חיתוך עם הצירים' })).toBeInTheDocument();
+  typeInto(screen.getByLabelText('חיתוך עם ציר y'), '(0, 0)');
+  typeInto(screen.getByLabelText('חיתוך עם ציר x'), '(0, 0)');
+  click('המשך/י לרמז הבא');
+
+  expect(screen.getByRole('heading', { name: 'נקודות החשודות כנקודות קיצון' })).toBeInTheDocument();
+  typeInto(screen.getByLabelText('נקודות חשודות (x)'), 'x = 0, x = 1.5');
+  typeInto(screen.getByLabelText('נקודות קיצון'), 'Min (0,0), Max (1.5,-3)');
+  typeInto(screen.getByLabelText("הנגזרת f'(x)"), "(-4x² + 6x)/(x² − 4x + 3)²");
+  fireEvent.click(screen.getByRole('button', { name: 'לשרטוט הפונקציה ←' }));
+
+  expect(screen.getByRole('heading', { name: 'שרטוט הפונקציה' })).toBeInTheDocument();
+  const leftIntervalSign = screen.getByLabelText("f'(x) — x < 0");
+  typeInto(leftIntervalSign, '-');
+  fireEvent.click(screen.getByRole('button', { name: '✏️ שרטוט ביד חופשית' }));
+  drawOnGraph();
   fireEvent.click(screen.getByRole('button', { name: 'רקע משובץ' }));
   expect(screen.getByRole('button', { name: 'רקע חלק' })).toHaveAttribute('aria-pressed', 'false');
-  fireEvent.click(screen.getByRole('button', { name: 'רקע חלק' }));
-  fireEvent.click(screen.getByRole('button', { name: 'מלא טבלה תקינה' }));
-  const leftIntervalSign = screen.getByLabelText("f'(x) — x < 0");
-  typeInto(leftIntervalSign, '+');
-  expect(screen.getByText('קיימת אי־התאמה בטבלה. בדקו את התאים המסומנים.')).toBeInTheDocument();
-  typeInto(leftIntervalSign, '-');
-  expect(screen.queryByText('קיימת אי־התאמה בטבלה. בדקו את התאים המסומנים.')).not.toBeInTheDocument();
-  fireEvent.click(screen.getByRole('button', { name: 'שלב 1: סימון אסימפטוטות ונקודות' }));
-  fireEvent.click(screen.getByRole('button', { name: 'תחום 2' }));
-  fireEvent.click(screen.getByRole('button', { name: 'חשב ושמור במטמון' }));
-  expect(document.querySelectorAll('.renato-function-curve')).toHaveLength(1);
 
   const savedSession = JSON.parse(localStorage.getItem('ctAdapt.session'));
   expect(savedSession.activityPath).toBe('renato');
   expect(savedSession.renatoWork.functionExpression).toBe('x² / (x² − 4x + 3)');
   expect(savedSession.renatoWork.cards.domain.answer).toBe('x ≠ 1, x ≠ 3');
-  expect(savedSession.renatoWork.grid).toBe(true);
+  expect(savedSession.renatoWork.cards.asymptotes.vertical).toBe('x = 1, x = 3');
   expect(savedSession.renatoWork.table.columns[0].derivative).toBe('-');
-  expect(savedSession.renatoWork.valueCache['0']).toBe('0');
-  expect(savedSession.renatoWork.cacheNotification).toBe('נשמר בזיכרון המטמון: f(0) = 0.');
-  expect(savedSession.renatoWork.graphMarkers).toBe(true);
-  expect(savedSession.renatoWork.drawnDomains[2]).toBe(true);
+  expect(savedSession.renatoWork.graphStrokes).toHaveLength(1);
+  expect(savedSession.renatoWork.grid).toBe(false);
 
   unmount();
   render(<App />);
-  expect(screen.getByText('f(x) = x² / (x² − 4x + 3)')).toBeInTheDocument();
-  expect(screen.getByLabelText('תשובה')).toHaveValue('x ≠ 1, x ≠ 3');
-  expect(screen.getByRole('button', { name: 'רקע משובץ' })).toHaveAttribute('aria-pressed', 'true');
-  expect(screen.getByRole('button', { name: 'שלב 1: הסתרת אסימפטוטות ונקודות' })).toHaveAttribute('aria-pressed', 'true');
-  expect(screen.getByRole('button', { name: 'תחום 2 ✓' })).toHaveAttribute('aria-pressed', 'true');
-  expect(screen.getByText('נשמר בזיכרון המטמון: f(0) = 0.')).toBeInTheDocument();
-  expect(document.querySelectorAll('.renato-function-curve')).toHaveLength(1);
+  expect(screen.getByRole('heading', { name: 'שרטוט הפונקציה' })).toBeInTheDocument();
+  expect(document.querySelectorAll('.renato-student-stroke')).toHaveLength(1);
+  fireEvent.click(screen.getByRole('button', { name: /תחום ההגדרה/ }));
+  expect(screen.getByLabelText('תחום ההגדרה שמצאת')).toHaveValue('x ≠ 1, x ≠ 3');
+  fireEvent.click(screen.getByRole('button', { name: /שרטוט הפונקציה/ }));
+  expect(screen.getByRole('button', { name: 'רקע חלק' })).toHaveAttribute('aria-pressed', 'false');
 
-  click('סיימתי את חקירת הפונקציה');
+  click('הגשת שרטוט וסיום');
+  expect(screen.getByRole('heading', { name: 'בוחן העברה' })).toBeInTheDocument();
+  expect(screen.getByRole('math', { name: 'g(x) = x² / (x² − 6x + 8)' })).toBeInTheDocument();
+  fillTransferAssessment();
+  click('הגשת הבוחן וסיום');
   expect(screen.getByText('סיימת! תודה רבה!')).toBeInTheDocument();
+  const renatoLogs = JSON.parse(localStorage.getItem('ctAdapt.logs'));
+  const renatoCompletion = renatoLogs.find(({ actionType }) => actionType === 'activity_complete');
+  expect(renatoCompletion.data.activityPath).toBe('renato');
+  expect(renatoCompletion.data.sessionId).toBe(
+    renatoLogs.find(({ actionType }) => actionType === 'activity_start').data.sessionId,
+  );
+  expect(renatoCompletion.data.assessment).toMatchObject({
+    domain: 'x ≠ 1, x ≠ 3',
+    verticalAsymptotes: 'x = 1, x = 3',
+    horizontalAsymptote: 'y = 1',
+    signBehavior: expect.any(Array),
+    graph: { graphStrokes: expect.any(Array) },
+  });
+  expect(renatoCompletion.data.assessment.signBehavior).toHaveLength(9);
+  const transferSubmit = renatoLogs.find(({ actionType }) => actionType === 'transfer_submit');
+  expect(transferSubmit.data.activityPath).toBe('renato');
+  expect(Object.keys(transferSubmit.data.assessment)).toHaveLength(10);
+});
+
+test('the 30-minute learning limit moves an active participant to the shared transfer test', async () => {
+  const startTime = Date.now() - (STUDY_DURATION_SECONDS + 1) * 1000;
+  localStorage.setItem('ctAdapt.session', JSON.stringify({
+    studentId: 'TIME01',
+    sessionId: 'session-time-limit',
+    activityPath: 'classic',
+    mode: 'student',
+    isActive: true,
+    startTime,
+    allocation: { method: 'balanced_randomized_blocks', allocationIndex: 1 },
+    preAssessmentSubmittedAt: startTime,
+    learningStartedAt: startTime,
+  }));
+  window.history.replaceState({}, '', '/activities/classic');
+
+  render(<App />);
+
+  await waitFor(() => {
+    expect(screen.getByRole('heading', { name: 'בוחן העברה' })).toBeInTheDocument();
+  });
+  const logs = JSON.parse(localStorage.getItem('ctAdapt.logs'));
+  expect(logs.some((entry) => entry.actionType === 'time_limit_reached')).toBe(true);
 });

@@ -8,7 +8,7 @@ export default function ProblemScreen() {
   const { goToSolving } = usePhaseNavigation();
 
   return (
-    <div className="container">
+    <div className="container learning-screen problem-screen">
       <ProgressBar />
 
       <ProblemBox

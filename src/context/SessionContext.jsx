@@ -14,17 +14,31 @@ import React, {
 } from 'react';
 import { ActivityPath, Mode } from '../core/types/enums';
 import { RENATO_FUNCTION, RENATO_TABLE_COLUMNS } from '../core/constants/renato';
+import { createEmptyFunctionAssessment } from '../core/constants/functionAssessments';
+import { generateId } from '../core/utils/idGenerator';
 
 const SessionContext = createContext(null);
 const STORAGE_KEY = 'ctAdapt.session';
 
 const createInitialState = () => ({
   studentId: '',
+  sessionId: null,
   group: null,
   mode: Mode.STUDENT,
-  activityPath: ActivityPath.CT_ADAPT,
+  activityPath: ActivityPath.CLASSIC,
+  allocation: null,
   isActive: false,
   startTime: null,
+  learningStartedAt: null,
+  preAssessmentSubmittedAt: null,
+  learningEndedAt: null,
+  graphWork: {
+    grid: true,
+    graphStrokes: [],
+    drawMode: false,
+    graphMarkers: false,
+    graphAsymptoteStyle: 'dashed',
+  },
   answers: {
     main: '',
     corrected: '',
@@ -37,6 +51,31 @@ const createInitialState = () => ({
     analogAbstract: '',
     analogAnswer: '',
   },
+  classicWork: {
+    domain: '',
+    derivative: '',
+    criticalPoints: '',
+    extremaPoints: '',
+    verticalAsymptotes: '',
+    horizontalAsymptote: '',
+    yAxisIntercept: '',
+    xAxisIntercept: '',
+    signBehavior: '',
+    graph: '',
+  },
+  transferAssessment: {
+    domain: '',
+    derivative: '',
+    criticalPoints: '',
+    extremaPoints: '',
+    verticalAsymptotes: '',
+    horizontalAsymptote: '',
+    yAxisIntercept: '',
+    xAxisIntercept: '',
+    signBehavior: '',
+    graph: '',
+  },
+  preAssessment: createEmptyFunctionAssessment(),
   detectedDifficulty: null,
   selectedAnalogTask: null,
   hintLevel: 0,
@@ -73,6 +112,7 @@ const createInitialState = () => ({
     cacheNotification: null,
     grid: true,
     graphStrokes: [],
+    drawMode: false,
     graphMarkers: false,
     graphAsymptoteStyle: 'dashed',
     drawnDomains: { 1: false, 2: false, 3: false, 4: false },
@@ -93,9 +133,35 @@ const readStoredSession = () => {
     return {
       ...initial,
       ...parsed,
+      sessionId: parsed.sessionId || `session_${parsed.startTime || Date.now()}`,
+      activityPath: parsed.activityPath === ActivityPath.RENATO
+        ? ActivityPath.RENATO
+        : ActivityPath.CLASSIC,
+      allocation: parsed.allocation || null,
+      graphWork: {
+        ...initial.graphWork,
+        ...(parsed.graphWork || {}),
+        graphStrokes: Array.isArray(parsed.graphWork?.graphStrokes)
+          ? parsed.graphWork.graphStrokes
+          : (Array.isArray(parsed.renatoWork?.graphStrokes)
+            ? parsed.renatoWork.graphStrokes
+            : initial.graphWork.graphStrokes),
+      },
       answers: {
         ...initial.answers,
         ...(parsed.answers || {}),
+      },
+      classicWork: {
+        ...initial.classicWork,
+        ...(parsed.classicWork || {}),
+      },
+      transferAssessment: {
+        ...initial.transferAssessment,
+        ...(parsed.transferAssessment || {}),
+      },
+      preAssessment: {
+        ...initial.preAssessment,
+        ...(parsed.preAssessment || {}),
       },
       effortRatings: {
         ...initial.effortRatings,
@@ -151,6 +217,9 @@ const readStoredSession = () => {
           ...initial.renatoWork.drawnDomains,
           ...(parsed.renatoWork?.drawnDomains || {}),
         },
+        graphStrokes: Array.isArray(parsed.renatoWork?.graphStrokes)
+          ? parsed.renatoWork.graphStrokes
+          : initial.renatoWork.graphStrokes,
       },
     };
   } catch (error) {
@@ -210,6 +279,39 @@ function sessionReducer(state, action) {
         ...state,
         renatoWork: { ...state.renatoWork, ...action.payload },
       };
+    case 'UPDATE_CLASSIC_WORK':
+      return {
+        ...state,
+        classicWork: { ...state.classicWork, ...action.payload },
+      };
+    case 'UPDATE_TRANSFER_ASSESSMENT':
+      return {
+        ...state,
+        transferAssessment: { ...state.transferAssessment, ...action.payload },
+      };
+    case 'UPDATE_GRAPH_WORK':
+      return {
+        ...state,
+        graphWork: { ...state.graphWork, ...action.payload },
+      };
+    case 'END_LEARNING':
+      return {
+        ...state,
+        learningEndedAt: state.learningEndedAt || action.payload,
+      };
+    case 'START_LEARNING':
+      return state.learningStartedAt
+        ? state
+        : {
+          ...state,
+          learningStartedAt: action.payload,
+          preAssessmentSubmittedAt: action.payload,
+        };
+    case 'UPDATE_PRE_ASSESSMENT':
+      return {
+        ...state,
+        preAssessment: { ...state.preAssessment, ...action.payload },
+      };
     case 'RESET_SESSION':
       return createInitialState();
     default:
@@ -247,11 +349,14 @@ export function SessionProvider({ children }) {
 
   const actions = useMemo(
     () => ({
-      initSession: (studentId, group, mode, activityPath = ActivityPath.CT_ADAPT) =>
+      initSession: (studentId, activityPath, mode, allocation = null) => {
+        const sessionId = generateId('session');
         dispatch({
           type: 'INIT_SESSION',
-          payload: { studentId, group, mode, activityPath },
-        }),
+          payload: { studentId, sessionId, activityPath, mode, allocation },
+        });
+        return sessionId;
+      },
       setAnswer: (key, value) =>
         dispatch({ type: 'SET_ANSWER', payload: { key, value } }),
       setDetectedDifficulty: (d) =>
@@ -268,6 +373,21 @@ export function SessionProvider({ children }) {
         dispatch({ type: 'UPDATE_ALGO_NODES', payload: nodes }),
       updateRenatoWork: (patch) =>
         dispatch({ type: 'UPDATE_RENATO_WORK', payload: patch }),
+      updateClassicWork: (patch) =>
+        dispatch({ type: 'UPDATE_CLASSIC_WORK', payload: patch }),
+      updateTransferAssessment: (patch) =>
+        dispatch({ type: 'UPDATE_TRANSFER_ASSESSMENT', payload: patch }),
+      updateGraphWork: (patch) => dispatch({ type: 'UPDATE_GRAPH_WORK', payload: patch }),
+      endLearning: (endedAt = Date.now()) => {
+        dispatch({ type: 'END_LEARNING', payload: endedAt });
+        return endedAt;
+      },
+      startLearning: (startedAt = Date.now()) => {
+        dispatch({ type: 'START_LEARNING', payload: startedAt });
+        return startedAt;
+      },
+      updatePreAssessment: (patch) =>
+        dispatch({ type: 'UPDATE_PRE_ASSESSMENT', payload: patch }),
       resetSession: () => dispatch({ type: 'RESET_SESSION' }),
     }),
     [],

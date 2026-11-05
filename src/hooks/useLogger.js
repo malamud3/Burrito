@@ -15,10 +15,15 @@ export function useLogger() {
     (actionType, data = {}, skill = null) =>
       addLog(
         actionType,
-        { ...data, studentId: session.studentId, group: session.group },
+        {
+          ...data,
+          studentId: session.studentId,
+          sessionId: session.sessionId,
+          activityPath: session.activityPath,
+        },
         skill,
       ),
-    [addLog, session.studentId, session.group],
+    [addLog, session.studentId, session.sessionId, session.activityPath],
   );
 
   return { log, logs };

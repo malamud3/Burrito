@@ -23,7 +23,6 @@ export default function CompletionScreen() {
   const rows = [
     ['קוד תלמיד/ה', session.studentId],
     ['מסלול', session.activityPath === ActivityPath.RENATO ? 'רנאטו סאיג — חשיבה חישובית' : 'קלאסי'],
-    ['בוחן מקדים', session.preAssessmentSubmittedAt ? 'הוגש' : 'לא הוגש'],
     ['בוחן העברה', sessionLogs.some((entry) => entry.actionType === 'transfer_submit') ? 'הוגש' : 'לא הוגש'],
     ['משך הפעילות', formatTime(summary.totalDurationSeconds)],
     ['פעולות שנרשמו', summary.totalActions],

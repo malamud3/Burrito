@@ -40,24 +40,6 @@ const fillTransferAssessment = () => {
     typeInto(screen.getByLabelText(label), `תשובת בוחן ${index + 1}`);
   });
 };
-const fillPreAssessment = () => {
-  [
-    'א. מצאו את תחום ההגדרה.',
-    'ב. מצאו את הנגזרת.',
-    'ג. מצאו את ערכי x החשודים כנקודות קיצון.',
-    'ד. מצאו וסווגו את נקודות הקיצון.',
-    'ה. מצאו את האסימפטוטות האנכיות.',
-    'ו. מצאו את האסימפטוטה האופקית.',
-    'ז. מצאו את נקודת החיתוך עם ציר y.',
-    'ח. מצאו את נקודת החיתוך עם ציר x.',
-    'ט. קבעו את סימן הנגזרת ואת תחומי העלייה והירידה.',
-    'י. שרטטו סקיצה של הגרף וציינו את המאפיינים שסימנתם.',
-  ].forEach((label, index) => {
-    typeInto(screen.getByLabelText(label), `תשובת קדם ${index + 1}`);
-  });
-  click('הגשת הבוחן והתחלת הלמידה');
-};
-
 beforeEach(() => {
   localStorage.clear();
   window.history.replaceState({}, '', '/');
@@ -69,10 +51,8 @@ test('classic path presents direct math questions and saves comparable responses
   choosePath('המסלול הקלאסי');
   click('התחל/י');
 
-  expect(screen.getByRole('heading', { name: 'בוחן מקדים' })).toBeInTheDocument();
-  expect(screen.getByRole('math', { name: 'h(x) = x² / (x² − 8x + 15)' })).toBeInTheDocument();
-  fillPreAssessment();
   expect(screen.getByRole('heading', { name: 'חקירת פונקציה' })).toBeInTheDocument();
+  expect(screen.queryByRole('heading', { name: 'בוחן מקדים' })).not.toBeInTheDocument();
   expect(screen.getByText('f(x) = x² / (x² − 4x + 3)')).toBeInTheDocument();
   expect(screen.getByLabelText('א. מצאו את תחום ההגדרה של הפונקציה.')).toBeInTheDocument();
   expect(screen.queryByRole('heading', { name: 'תחום ההגדרה' })).not.toBeInTheDocument();
@@ -102,7 +82,7 @@ test('classic path presents direct math questions and saves comparable responses
   expect(savedSession.classicWork.horizontalAsymptote).toBe('y=1');
   const logs = JSON.parse(localStorage.getItem('ctAdapt.logs'));
   const start = logs.find(({ actionType }) => actionType === 'activity_start');
-  const preSubmit = logs.find(({ actionType }) => actionType === 'pre_assessment_submit');
+  const learningStart = logs.find(({ actionType }) => actionType === 'learning_start');
   const complete = logs.find(({ actionType }) => actionType === 'activity_complete');
   expect(start.data).toMatchObject({
     studentId: 'C01',
@@ -113,9 +93,10 @@ test('classic path presents direct math questions and saves comparable responses
     studyDurationMinutes: 30,
   });
   expect(start.data.sessionId).toBeTruthy();
-  expect(preSubmit.data).toMatchObject({
-    functionExpression: 'x² / (x² − 8x + 15)',
-    assessment: { domain: 'תשובת קדם 1' },
+  expect(learningStart.data).toMatchObject({
+    activityPath: 'classic',
+    durationLimitMinutes: 30,
+    startedAt: expect.any(Number),
   });
   expect(complete.data.activityPath).toBe('classic');
   expect(complete.data.sessionId).toBe(start.data.sessionId);
@@ -143,16 +124,14 @@ test('researcher mode opens the dashboard without assigning a participant', () =
   expect(screen.queryByRole('tab', { name: 'זיהוי קשיים' })).not.toBeInTheDocument();
 });
 
-test('pre-assessment must be completed before learning begins', () => {
+test('students start the selected learning path immediately', () => {
   render(<App />);
   typeInto(screen.getByPlaceholderText('הכנס קוד משתתף/ת'), 'PRE01');
   choosePath('המסלול הקלאסי');
   click('התחל/י');
 
-  expect(screen.getByRole('heading', { name: 'בוחן מקדים' })).toBeInTheDocument();
-  click('הגשת הבוחן והתחלת הלמידה');
-  expect(screen.getByText('יש להשלים את כל סעיפי הבוחן המקדים לפני ההמשך.')).toBeInTheDocument();
-  expect(screen.queryByRole('heading', { name: 'חקירת פונקציה' })).not.toBeInTheDocument();
+  expect(screen.getByRole('heading', { name: 'חקירת פונקציה' })).toBeInTheDocument();
+  expect(screen.queryByRole('heading', { name: 'בוחן מקדים' })).not.toBeInTheDocument();
 });
 
 test('a student must choose one of the two learning paths before starting', () => {
@@ -265,7 +244,7 @@ test('opening the transfer route directly cannot skip the learning activity', ()
 
   render(<App />);
 
-  expect(screen.getByRole('heading', { name: 'בוחן מקדים' })).toBeInTheDocument();
+  expect(screen.getByRole('heading', { name: 'חקירת פונקציה' })).toBeInTheDocument();
   expect(screen.queryByRole('heading', { name: 'בוחן העברה' })).not.toBeInTheDocument();
 });
 
@@ -275,27 +254,71 @@ test('Renato path guides through the cards, saves a graph, and exports comparabl
   choosePath('מסלול רנאטו');
   click('התחל/י');
 
-  expect(screen.getByRole('heading', { name: 'בוחן מקדים' })).toBeInTheDocument();
-  fillPreAssessment();
   expect(screen.getByRole('heading', { name: 'כלי עזר לחקירת פונקציות' })).toBeInTheDocument();
   expect(screen.getByRole('math', { name: 'f(x) = x² / (x² − 4x + 3)' })).toBeInTheDocument();
   expect(screen.getByText(/לרשותכם 30 דקות/)).toBeInTheDocument();
-  typeInto(screen.getByLabelText('תחום ההגדרה שמצאת'), 'x ≠ 1, x ≠ 3');
-  click('המשך/י לרמז הבא');
+  expect(screen.getByRole('progressbar', { name: 'שדות תשובה שמולאו' }))
+    .toHaveAttribute('aria-valuenow', '0');
+  expect(screen.getByText('0 מתוך 8 שדות')).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: /שלב 1 · טרם התחלת תחום ההגדרה/ })).toBeInTheDocument();
+  expect(screen.queryByText('אילו ערכי x מאפסים את המכנה?')).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: /הצגת שלב עזר 1 מתוך 2/ }));
+  expect(screen.getByText('אילו ערכי x מאפסים את המכנה?')).toBeInTheDocument();
+  expect(screen.queryByText('תחום ההגדרה כולל את כל המספרים הממשיים מלבד הערכים שמצאת.')).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: /הצגת שלב עזר 2 מתוך 2/ }));
+  expect(screen.getByText('תחום ההגדרה כולל את כל המספרים הממשיים מלבד הערכים שמצאת.')).toBeInTheDocument();
+  expect(screen.getByText('כל שלבי העזר זמינים למעלה.')).toBeInTheDocument();
+  const hintLogs = JSON.parse(localStorage.getItem('ctAdapt.logs'))
+    .filter(({ actionType }) => actionType === 'hint_request');
+  expect(hintLogs.map(({ data }) => data)).toEqual(expect.arrayContaining([
+    expect.objectContaining({ phase: 'function_analysis', stepId: 'domain', hintIndex: 1 }),
+    expect.objectContaining({ phase: 'function_analysis', stepId: 'domain', hintIndex: 2 }),
+  ]));
+  typeInto(screen.getByLabelText('ערכי x שאינם בתחום — ערך — x ≠'), '1');
+  fireEvent.click(screen.getByRole('button', { name: 'הוספת ערך' }));
+  typeInto(screen.getByLabelText('ערכי x שאינם בתחום — שורה 2 — x ≠'), '3');
+  expect(screen.getByRole('progressbar', { name: 'שדות תשובה שמולאו' }))
+    .toHaveAttribute('aria-valuenow', '1');
+  expect(screen.getByText('1 מתוך 8 שדות')).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: /שלב 1 · השדות מולאו תחום ההגדרה/ })).toBeInTheDocument();
+  click('המשך/י לשלב הבא');
 
   expect(screen.getByRole('heading', { name: 'אסימפטוטות מקבילות לצירים' })).toBeInTheDocument();
-  typeInto(screen.getByLabelText('אסימפטוטות אנכיות'), 'x = 1, x = 3');
-  typeInto(screen.getByLabelText('אסימפטוטה אופקית'), 'y = 1');
-  click('המשך/י לרמז הבא');
+  const phaseChanges = JSON.parse(localStorage.getItem('ctAdapt.logs'))
+    .filter(({ actionType, data }) => (
+      actionType === 'phase_change'
+      && data.from === 'renato'
+      && data.to === 'renato-asymptotes'
+    ));
+  expect(phaseChanges).toHaveLength(1);
+  typeInto(screen.getByLabelText('אסימפטוטות אנכיות — ערך — x ='), '1');
+  fireEvent.click(screen.getByRole('button', { name: 'הוספת ערך' }));
+  typeInto(screen.getByLabelText('אסימפטוטות אנכיות — שורה 2 — x ='), '3');
+  typeInto(screen.getByLabelText('אסימפטוטה אופקית — ערך — y ='), '1');
+  click('המשך/י לשלב הבא');
 
   expect(screen.getByRole('heading', { name: 'נקודות חיתוך עם הצירים' })).toBeInTheDocument();
-  typeInto(screen.getByLabelText('חיתוך עם ציר y'), '(0, 0)');
-  typeInto(screen.getByLabelText('חיתוך עם ציר x'), '(0, 0)');
-  click('המשך/י לרמז הבא');
+  typeInto(screen.getByLabelText('חיתוך עם ציר y — ערך — x'), '0');
+  typeInto(screen.getByLabelText('חיתוך עם ציר y — ערך — y'), '0');
+  typeInto(screen.getByLabelText('חיתוך עם ציר x — ערך — x'), '0');
+  typeInto(screen.getByLabelText('חיתוך עם ציר x — ערך — y'), '0');
+  click('המשך/י לשלב הבא');
 
   expect(screen.getByRole('heading', { name: 'נקודות החשודות כנקודות קיצון' })).toBeInTheDocument();
-  typeInto(screen.getByLabelText('נקודות חשודות (x)'), 'x = 0, x = 1.5');
-  typeInto(screen.getByLabelText('נקודות קיצון'), 'Min (0,0), Max (1.5,-3)');
+  typeInto(screen.getByLabelText('ערכי x חשודים — ערך — x ='), '0');
+  fireEvent.click(screen.getByRole('button', { name: 'הוספת ערך' }));
+  typeInto(screen.getByLabelText('ערכי x חשודים — שורה 2 — x ='), '1.5');
+  fireEvent.change(screen.getByLabelText('נקודות קיצון — ערך — סיווג'), {
+    target: { value: 'Min' },
+  });
+  typeInto(screen.getByLabelText('נקודות קיצון — ערך — x'), '0');
+  typeInto(screen.getByLabelText('נקודות קיצון — ערך — y'), '0');
+  fireEvent.click(screen.getByRole('button', { name: 'הוספת נקודה' }));
+  fireEvent.change(screen.getByLabelText('נקודות קיצון — שורה 2 — סיווג'), {
+    target: { value: 'Max' },
+  });
+  typeInto(screen.getByLabelText('נקודות קיצון — שורה 2 — x'), '1.5');
+  typeInto(screen.getByLabelText('נקודות קיצון — שורה 2 — y'), '-3');
   typeInto(screen.getByLabelText("הנגזרת f'(x)"), "(-4x² + 6x)/(x² − 4x + 3)²");
   fireEvent.click(screen.getByRole('button', { name: 'לשרטוט הפונקציה ←' }));
 
@@ -321,7 +344,8 @@ test('Renato path guides through the cards, saves a graph, and exports comparabl
   expect(screen.getByRole('heading', { name: 'שרטוט הפונקציה' })).toBeInTheDocument();
   expect(document.querySelectorAll('.renato-student-stroke')).toHaveLength(1);
   fireEvent.click(screen.getByRole('button', { name: /תחום ההגדרה/ }));
-  expect(screen.getByLabelText('תחום ההגדרה שמצאת')).toHaveValue('x ≠ 1, x ≠ 3');
+  expect(screen.getByLabelText('ערכי x שאינם בתחום — שורה 1 — x ≠')).toHaveValue(1);
+  expect(screen.getByLabelText('ערכי x שאינם בתחום — שורה 2 — x ≠')).toHaveValue(3);
   fireEvent.click(screen.getByRole('button', { name: /שרטוט הפונקציה/ }));
   expect(screen.getByRole('button', { name: 'רקע חלק' })).toHaveAttribute('aria-pressed', 'false');
 

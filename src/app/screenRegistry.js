@@ -5,7 +5,6 @@
 
 import { Phase } from '../core/types/enums';
 import LoginScreen from '../components/screens/LoginScreen';
-import PreAssessmentScreen from '../components/screens/PreAssessmentScreen';
 import RenatoScreen, {
   RenatoAsymptotesScreen,
   RenatoExtremaScreen,
@@ -19,7 +18,6 @@ import ResearcherDashboard from '../components/screens/ResearcherDashboard';
 
 export const SCREEN_REGISTRY = {
   [Phase.LOGIN]: LoginScreen,
-  [Phase.PRE_ASSESSMENT]: PreAssessmentScreen,
   [Phase.CLASSIC]: ClassicScreen,
   [Phase.RENATO]: RenatoScreen,
   [Phase.RENATO_ASYMPTOTES]: RenatoAsymptotesScreen,

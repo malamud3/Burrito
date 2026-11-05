@@ -38,27 +38,6 @@ function PhaseRoute({ phase, Screen }) {
   ) {
     return <Navigate to={PHASE_PATHS[Phase.DASHBOARD]} replace />;
   }
-  if (
-    session.mode === Mode.STUDENT &&
-    session.isActive &&
-    session.allocation &&
-    phase !== Phase.LOGIN &&
-    phase !== Phase.DASHBOARD &&
-    !session.preAssessmentSubmittedAt &&
-    phase !== Phase.PRE_ASSESSMENT
-  ) {
-    return <Navigate to={PHASE_PATHS[Phase.PRE_ASSESSMENT]} replace />;
-  }
-  if (
-    phase === Phase.PRE_ASSESSMENT &&
-    session.allocation &&
-    session.preAssessmentSubmittedAt
-  ) {
-    const learningPath = session.activityPath === ActivityPath.RENATO
-      ? PHASE_PATHS[Phase.RENATO]
-      : PHASE_PATHS[Phase.CLASSIC];
-    return <Navigate to={learningPath} replace />;
-  }
   if (isLearningPhase && (timeLimitReached || session.learningEndedAt)) {
     return <Navigate to={PHASE_PATHS[Phase.TRANSFER_EXAM]} replace />;
   }
@@ -168,9 +147,9 @@ function AppShell() {
     logs,
     addLog,
     endLearning,
+    session.activityPath,
     session.sessionId,
     session.studentId,
-    session.activityPath,
     currentPhase,
     goToTransferAssessment,
   ]);
@@ -190,6 +169,17 @@ function AppShell() {
             element={<PhaseRoute phase={phase} Screen={Screen} />}
           />
         ))}
+        <Route
+          path={PHASE_PATHS[Phase.PRE_ASSESSMENT]}
+          element={
+            <Navigate
+              to={session.activityPath === ActivityPath.RENATO
+                ? PHASE_PATHS[Phase.RENATO]
+                : PHASE_PATHS[Phase.CLASSIC]}
+              replace
+            />
+          }
+        />
         <Route path="/renato" element={<Navigate to={PHASE_PATHS[Phase.RENATO]} replace />} />
         <Route path="/" element={<Navigate to={rootPath} replace />} />
         <Route path="*" element={<Navigate to={rootPath} replace />} />

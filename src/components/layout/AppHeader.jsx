@@ -18,7 +18,10 @@ export default function AppHeader({ seconds }) {
 
   return (
     <header className="app-header">
-      <h1>📘 Burrito</h1>
+      <h1 className="app-brand">
+        <span className="app-brand-mark" aria-hidden="true">B</span>
+        <span>Burrito</span>
+      </h1>
       <div className="header-info">
         <span className="badge badge-phase">{session.studentId}</span>
         <span className={`badge ${isRenato ? 'badge-renato' : 'badge-classic'}`}>

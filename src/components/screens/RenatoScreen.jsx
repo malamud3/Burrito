@@ -9,6 +9,7 @@ import { useNotification } from '../../context/NotificationContext';
 import ProgressBar from '../layout/ProgressBar';
 import FunctionFraction from '../math/FunctionFraction';
 import FunctionGraph from '../math/FunctionGraph';
+import StructuredMathAnswer from '../math/StructuredMathAnswer';
 import StudyHint from '../math/StudyHint';
 
 const CARD_DEFINITIONS = [
@@ -16,7 +17,12 @@ const CARD_DEFINITIONS = [
     id: 'domain',
     title: 'תחום ההגדרה',
     description: 'מהו תחום ההגדרה של הפונקציה?',
-    fields: [{ key: 'answer', label: 'תחום ההגדרה שמצאת', placeholder: 'רשום/י את ערכי x שאינם בתחום' }],
+    fields: [{
+      key: 'answer',
+      label: 'ערכי x שאינם בתחום',
+      help: 'מצאו מתי המכנה שווה לאפס. הוסיפו שורה לכל ערך שאינו בתחום.',
+      input: { format: 'x-values', prefix: 'x ≠' },
+    }],
     notes: STUDY_HINTS.domain,
   },
   {
@@ -24,8 +30,18 @@ const CARD_DEFINITIONS = [
     title: 'אסימפטוטות מקבילות לצירים',
     description: 'אסימפטוטות אנכיות ואופקיות',
     fields: [
-      { key: 'vertical', label: 'אסימפטוטות אנכיות', placeholder: 'בדוק/י אילו ערכים מחוץ לתחום יוצרים אסימפטוטה' },
-      { key: 'horizontal', label: 'אסימפטוטה אופקית', placeholder: 'השווה/י בין דרגות המונה והמכנה' },
+      {
+        key: 'vertical',
+        label: 'אסימפטוטות אנכיות',
+        help: 'הזינו את ערכי x שבהם מופיעות אסימפטוטות אנכיות.',
+        input: { format: 'x-values', prefix: 'x =' },
+      },
+      {
+        key: 'horizontal',
+        label: 'אסימפטוטה אופקית',
+        help: 'הזינו את ערך y של האסימפטוטה.',
+        input: { format: 'y-value', prefix: 'y =' },
+      },
     ],
     checkDomain: true,
     notes: STUDY_HINTS.asymptotes,
@@ -35,8 +51,18 @@ const CARD_DEFINITIONS = [
     title: 'נקודות חיתוך עם הצירים',
     description: 'בחיתוך עם y מציבים x = 0; בחיתוך עם x משווים y ל־0',
     fields: [
-      { key: 'yAxis', label: 'חיתוך עם ציר y', placeholder: 'הצב/י x = 0 וחישב/י את ערך הפונקציה' },
-      { key: 'xAxis', label: 'חיתוך עם ציר x', placeholder: 'פתור/י f(x) = 0 ובדוק/י את תחום ההגדרה' },
+      {
+        key: 'yAxis',
+        label: 'חיתוך עם ציר y',
+        help: 'הזינו בנפרד את ערכי x ו־y של נקודת החיתוך.',
+        input: { format: 'coordinates' },
+      },
+      {
+        key: 'xAxis',
+        label: 'חיתוך עם ציר x',
+        help: 'הזינו בנפרד את ערכי x ו־y של נקודת החיתוך.',
+        input: { format: 'coordinates' },
+      },
     ],
     checkDomain: true,
     notes: STUDY_HINTS.intercepts,
@@ -46,9 +72,24 @@ const CARD_DEFINITIONS = [
     title: 'נקודות החשודות כנקודות קיצון',
     description: 'מציאת נקודות חשודות ובדיקת שינוי סימן הנגזרת',
     fields: [
-      { key: 'suspectedX', label: 'נקודות חשודות (x)', placeholder: 'פתור/י f′(x) = 0 ובדוק/י תחום' },
-      { key: 'points', label: 'נקודות קיצון', placeholder: 'מצא/י נקודות בעזרת טבלת הסימנים' },
-      { key: 'derivative', label: "הנגזרת f'(x)", placeholder: 'רשום/י את הנגזרת שמצאת' },
+      {
+        key: 'suspectedX',
+        label: 'ערכי x חשודים',
+        help: 'הוסיפו שורה לכל פתרון של f′(x) = 0, ובדקו שהוא בתחום.',
+        input: { format: 'x-values', prefix: 'x =' },
+      },
+      {
+        key: 'points',
+        label: 'נקודות קיצון',
+        help: 'בחרו סוג קיצון והזינו את הקואורדינטות של כל נקודה.',
+        input: { format: 'extrema' },
+      },
+      {
+        key: 'derivative',
+        label: "הנגזרת f'(x)",
+        placeholder: 'לדוגמה: (ביטוי במונה) / (ביטוי במכנה)',
+        help: 'בשדה הזה אפשר להקליד את הביטוי המלא.',
+      },
     ],
     checkDomain: true,
     notes: STUDY_HINTS.extrema,
@@ -62,33 +103,61 @@ const RENATO_CARD_PHASES = [
   Phase.RENATO_EXTREMA,
 ];
 
-function RenatoCard({ definition, value, onChange }) {
+const getDefinitionProgress = (definition, value) => {
+  const answeredFields = definition.fields.filter(({ key }) =>
+    typeof value[key] === 'string' && value[key].trim().length > 0,
+  ).length;
+
+  return {
+    answeredFields,
+    totalFields: definition.fields.length,
+    status: answeredFields === 0
+      ? 'טרם התחלת'
+      : answeredFields === definition.fields.length
+        ? 'השדות מולאו'
+        : 'בתהליך',
+  };
+};
+
+function RenatoCard({ definition, value, onChange, onHintReveal }) {
   const { id, title, description, fields, checkDomain, notes } = definition;
   return (
     <article className={`renato-card renato-card-${id}`}>
       <header className="renato-card-heading">
         <div>
-          <span className="renato-hint-label">רמז לתהליך החשיבה</span>
+          <span className="renato-hint-label">שלב בתהליך הפירוק</span>
           <h3>{title}</h3>
           <p>{description}</p>
         </div>
       </header>
       <div className="renato-card-fields">
-        {fields.map(({ key, label, placeholder }) => (
-          <label className="renato-field" key={key}>
-            <span>{label}</span>
-            <textarea
-              rows="1"
-              dir="ltr"
-              aria-label={label}
-              placeholder={placeholder}
-              value={value[key]}
-              onChange={(event) => onChange(id, key, event.target.value)}
-            />
-          </label>
+        {fields.map(({ key, label, placeholder, help, input }) => (
+          <div className="renato-field" key={key}>
+            <span className="renato-field-label">{label}</span>
+            {help && <span className="renato-field-help">{help}</span>}
+            {input ? (
+              <StructuredMathAnswer
+                label={label}
+                value={value[key]}
+                onChange={(nextValue) => onChange(id, key, nextValue)}
+                {...input}
+              />
+            ) : (
+              <>
+                <textarea
+                  rows="1"
+                  dir="ltr"
+                  aria-label={label}
+                  placeholder={placeholder}
+                  value={value[key]}
+                  onChange={(event) => onChange(id, key, event.target.value)}
+                />
+              </>
+            )}
+          </div>
         ))}
       </div>
-      <StudyHint hints={notes} />
+      <StudyHint hints={notes} onReveal={onHintReveal} />
       {checkDomain && (
         <label className="renato-checkbox">
           <input
@@ -181,6 +250,18 @@ export default function RenatoScreen({ step = Phase.RENATO } = {}) {
   const currentDefinition = CARD_DEFINITIONS[stepIndex];
   const tableValues = Object.fromEntries(
     work.table.columns.map(({ id, ...values }) => [id, values]),
+  );
+  const stepProgress = CARD_DEFINITIONS.map((definition) => ({
+    definition,
+    ...getDefinitionProgress(definition, work.cards[definition.id]),
+  }));
+  const answeredFields = stepProgress.reduce(
+    (total, progress) => total + progress.answeredFields,
+    0,
+  );
+  const totalFields = stepProgress.reduce(
+    (total, progress) => total + progress.totalFields,
+    0,
   );
 
   const updateCard = (cardId, field, value) => {
@@ -278,8 +359,31 @@ export default function RenatoScreen({ step = Phase.RENATO } = {}) {
         />
       </section>
 
+      <section className="renato-learning-progress" aria-labelledby="renato-progress-title">
+        <div className="renato-learning-progress-heading">
+          <div>
+            <h2 id="renato-progress-title">ההתקדמות שלך בחקירה</h2>
+            <p>מעקב אחר שדות שמולאו — לא בדיקת נכונות או שליטה בחומר.</p>
+          </div>
+          <strong>{answeredFields} מתוך {totalFields} שדות</strong>
+        </div>
+        <div
+          className="renato-learning-progress-track"
+          role="progressbar"
+          aria-label="שדות תשובה שמולאו"
+          aria-valuenow={answeredFields}
+          aria-valuemin={0}
+          aria-valuemax={totalFields}
+        >
+          <div
+            className="renato-learning-progress-fill"
+            style={{ width: `${(answeredFields / totalFields) * 100}%` }}
+          />
+        </div>
+      </section>
+
       <nav className="renato-step-navigation" aria-label="שלבי חקירת הפונקציה">
-        {CARD_DEFINITIONS.map((definition, index) => {
+        {stepProgress.map(({ definition, status }, index) => {
           const phase = RENATO_CARD_PHASES[index];
           return (
             <button
@@ -289,7 +393,7 @@ export default function RenatoScreen({ step = Phase.RENATO } = {}) {
               aria-current={step === phase ? 'step' : undefined}
               onClick={() => goTo(phase)}
             >
-              <span>רמז {index + 1}</span>
+              <span>שלב {index + 1} · {status}</span>
               <strong>{definition.title}</strong>
             </button>
           );
@@ -302,6 +406,7 @@ export default function RenatoScreen({ step = Phase.RENATO } = {}) {
         >
           <span>פתרון מסכם</span>
           <strong>שרטוט הפונקציה</strong>
+          <span>{graphWork.graphStrokes.length ? 'השרטוט התחיל' : 'טרם התחלת'}</span>
         </button>
       </nav>
 
@@ -314,6 +419,12 @@ export default function RenatoScreen({ step = Phase.RENATO } = {}) {
             definition={currentDefinition}
             value={work.cards[currentDefinition.id]}
             onChange={updateCard}
+            onHintReveal={(hintIndex) => log(LogActionType.HINT_REQUEST, {
+              phase: 'function_analysis',
+              stepId: currentDefinition.id,
+              hintIndex,
+              totalHints: currentDefinition.notes.length,
+            })}
           />
         </section>
       )}
@@ -337,7 +448,7 @@ export default function RenatoScreen({ step = Phase.RENATO } = {}) {
         ) : <span />}
         {nextStep ? (
           <button className="btn btn-primary" onClick={() => goTo(nextStep)}>
-            {nextStep === Phase.RENATO_GRAPH ? 'לשרטוט הפונקציה ←' : 'המשך/י לרמז הבא ←'}
+            {nextStep === Phase.RENATO_GRAPH ? 'לשרטוט הפונקציה ←' : 'המשך/י לשלב הבא ←'}
           </button>
         ) : (
           <button className="btn btn-primary" onClick={handleFinish}>

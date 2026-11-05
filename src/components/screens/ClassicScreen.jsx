@@ -153,7 +153,17 @@ export default function ClassicScreen() {
                   onChange={(event) => handleChange(key, event.target.value)}
                 />
               </div>
-              {hintKey && <StudyHint hints={STUDY_HINTS[hintKey]} />}
+              {hintKey && (
+                <StudyHint
+                  hints={STUDY_HINTS[hintKey]}
+                  onReveal={(hintIndex) => log(LogActionType.HINT_REQUEST, {
+                    phase: 'classic',
+                    stepId: hintKey,
+                    hintIndex,
+                    totalHints: STUDY_HINTS[hintKey].length,
+                  })}
+                />
+              )}
             </React.Fragment>
           );
         })}

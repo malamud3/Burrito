@@ -27,7 +27,7 @@ const readStoredPhase = (activityPath) => {
 
   try {
     const storedPhase = window.localStorage.getItem(STORAGE_KEY);
-    if ([Phase.LOGIN, Phase.DASHBOARD, Phase.COMPLETION, Phase.PRE_ASSESSMENT].includes(storedPhase)) {
+    if ([Phase.LOGIN, Phase.DASHBOARD, Phase.COMPLETION].includes(storedPhase)) {
       return storedPhase;
     }
     if (storedPhase === Phase.TRANSFER_EXAM) return storedPhase;
@@ -52,6 +52,7 @@ export function PhaseProvider({ children }) {
   const { addLog } = useLogContext();
   const location = useLocation();
   const navigate = useNavigate();
+  const lastObservedPath = useRef(location.pathname);
   const [currentPhase, setCurrentPhase] = useState(() =>
     session.isActive
       ? getPhaseFromPath(location.pathname) || readStoredPhase(session.activityPath)
@@ -60,6 +61,9 @@ export function PhaseProvider({ children }) {
   const [phaseHistory, setPhaseHistory] = useState([currentPhase]);
 
   useEffect(() => {
+    if (location.pathname === lastObservedPath.current) return;
+    lastObservedPath.current = location.pathname;
+
     const routePhase = getPhaseFromPath(location.pathname);
     if (routePhase && routePhase !== currentPhase) {
       addLog(LogActionType.PHASE_CHANGE, {
@@ -94,8 +98,6 @@ export function PhaseProvider({ children }) {
   const navigateTo = useCallback((phase) => {
     const path = PHASE_PATHS[phase];
     if (!path) throw new Error(`No route is registered for phase "${phase}"`);
-    setCurrentPhase(phase);
-    setPhaseHistory((prev) => [...prev, phase]);
     navigate(path);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [navigate]);

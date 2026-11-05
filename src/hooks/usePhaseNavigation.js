@@ -16,17 +16,8 @@ export function usePhaseNavigation() {
   const { session, endLearning } = useSessionContext();
 
   const goTo = useCallback(
-    (phase) => {
-      addLog(LogActionType.PHASE_CHANGE, {
-        from: currentPhase,
-        to: phase,
-        studentId: session.studentId,
-        sessionId: session.sessionId,
-        activityPath: session.activityPath,
-      });
-      navigateTo(phase);
-    },
-    [currentPhase, navigateTo, addLog, session.studentId, session.sessionId, session.activityPath],
+    (phase) => navigateTo(phase),
+    [navigateTo],
   );
 
   const goNext = useCallback(() => navigateNext(), [navigateNext]);
@@ -34,7 +25,6 @@ export function usePhaseNavigation() {
   const shortcuts = useMemo(
     () => ({
       goToClassic: () => goTo(Phase.CLASSIC),
-      goToPreAssessment: () => goTo(Phase.PRE_ASSESSMENT),
       goToProblem: () => goTo(Phase.PROBLEM),
       goToSolving: () => goTo(Phase.SOLVING),
       goToDifficulty: () => goTo(Phase.DIFFICULTY),

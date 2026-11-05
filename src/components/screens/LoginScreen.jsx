@@ -29,22 +29,16 @@ export default function LoginScreen() {
 
   return (
     <div className="container">
-      <div className="card" style={{ maxWidth: 450, margin: '10vh auto 0' }}>
-        <h1
-          style={{
-            fontSize: '2rem',
-            textAlign: 'center',
-            marginBottom: 8,
-            color: 'var(--primary)',
-          }}
-        >
-          🧠 CT-Adapt
-        </h1>
-        <p style={{ textAlign: 'center', color: 'var(--text2)', marginBottom: 32 }}>
+      <div className="card login-card">
+        <div className="login-brand">
+          <span className="login-mark" aria-hidden="true">CT</span>
+          <h1>CT-Adapt</h1>
+        </div>
+        <p className="login-subtitle">
           סביבת למידה אדפטיבית לחשיבה חישובית במתמטיקה
         </p>
 
-        <div className="field">
+        <div className="field login-field">
           <label>קוד תלמיד/ה</label>
           <input
             type="text"
@@ -55,7 +49,7 @@ export default function LoginScreen() {
           />
         </div>
 
-        <div className="field">
+        <div className="field login-field">
           <label>קבוצת מחקר</label>
           <select value={group} onChange={(e) => setGroup(e.target.value)}>
             <option value="">— בחר/י —</option>
@@ -64,7 +58,7 @@ export default function LoginScreen() {
           </select>
         </div>
 
-        <div className="field">
+        <div className="field login-field">
           <label>מצב</label>
           <select value={mode} onChange={(e) => setMode(e.target.value)}>
             <option value={Mode.STUDENT}>תלמיד/ה</option>
@@ -72,7 +66,7 @@ export default function LoginScreen() {
           </select>
         </div>
 
-        <div className="btn-group" style={{ justifyContent: 'center' }}>
+        <div className="btn-group login-actions">
           <button className="btn btn-primary" onClick={handleStart}>
             התחל/י
           </button>

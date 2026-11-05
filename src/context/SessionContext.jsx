@@ -12,7 +12,8 @@ import React, {
   useMemo,
   useEffect,
 } from 'react';
-import { Mode } from '../core/types/enums';
+import { ActivityPath, Mode } from '../core/types/enums';
+import { RENATO_FUNCTION, RENATO_TABLE_COLUMNS } from '../core/constants/renato';
 
 const SessionContext = createContext(null);
 const STORAGE_KEY = 'ctAdapt.session';
@@ -21,6 +22,7 @@ const createInitialState = () => ({
   studentId: '',
   group: null,
   mode: Mode.STUDENT,
+  activityPath: ActivityPath.CT_ADAPT,
   isActive: false,
   startTime: null,
   answers: {
@@ -51,6 +53,29 @@ const createInitialState = () => ({
         { id: 'node_3', value: '', placeholder: 'תוצאה / תשובה' },
       ],
     },
+  },
+  renatoWork: {
+    functionExpression: RENATO_FUNCTION,
+    cards: {
+      domain: { order: 1, answer: '' },
+      extrema: { order: 4, suspectedX: '', points: '', derivative: '', checked: false },
+      asymptotes: { order: 2, vertical: '', horizontal: '', checked: false },
+      intercepts: { order: 3, yAxis: '', xAxis: '', checked: false },
+    },
+    table: {
+      columns: RENATO_TABLE_COLUMNS.map(({ id }) => ({
+        id,
+        derivative: '',
+        behavior: '',
+      })),
+    },
+    valueCache: {},
+    cacheNotification: null,
+    grid: true,
+    graphStrokes: [],
+    graphMarkers: false,
+    graphAsymptoteStyle: 'dashed',
+    drawnDomains: { 1: false, 2: false, 3: false, 4: false },
   },
 });
 
@@ -90,6 +115,41 @@ const readStoredSession = () => {
         algorithmic: {
           ...initial.toolState.algorithmic,
           ...(parsed.toolState?.algorithmic || {}),
+        },
+      },
+      renatoWork: {
+        ...initial.renatoWork,
+        ...(parsed.renatoWork || {}),
+        cards: {
+          ...initial.renatoWork.cards,
+          ...(parsed.renatoWork?.cards || {}),
+          domain: {
+            ...initial.renatoWork.cards.domain,
+            ...(parsed.renatoWork?.cards?.domain || {}),
+          },
+          extrema: {
+            ...initial.renatoWork.cards.extrema,
+            ...(parsed.renatoWork?.cards?.extrema || {}),
+          },
+          asymptotes: {
+            ...initial.renatoWork.cards.asymptotes,
+            ...(parsed.renatoWork?.cards?.asymptotes || {}),
+          },
+          intercepts: {
+            ...initial.renatoWork.cards.intercepts,
+            ...(parsed.renatoWork?.cards?.intercepts || {}),
+          },
+        },
+        table: {
+          ...initial.renatoWork.table,
+          ...(parsed.renatoWork?.table || {}),
+          columns: Array.isArray(parsed.renatoWork?.table?.columns)
+            ? parsed.renatoWork.table.columns
+            : initial.renatoWork.table.columns,
+        },
+        drawnDomains: {
+          ...initial.renatoWork.drawnDomains,
+          ...(parsed.renatoWork?.drawnDomains || {}),
         },
       },
     };
@@ -145,6 +205,11 @@ function sessionReducer(state, action) {
       return updateTool(state, 'abstraction', { rows: action.payload });
     case 'UPDATE_ALGO_NODES':
       return updateTool(state, 'algorithmic', { nodes: action.payload });
+    case 'UPDATE_RENATO_WORK':
+      return {
+        ...state,
+        renatoWork: { ...state.renatoWork, ...action.payload },
+      };
     case 'RESET_SESSION':
       return createInitialState();
     default:
@@ -182,8 +247,11 @@ export function SessionProvider({ children }) {
 
   const actions = useMemo(
     () => ({
-      initSession: (studentId, group, mode) =>
-        dispatch({ type: 'INIT_SESSION', payload: { studentId, group, mode } }),
+      initSession: (studentId, group, mode, activityPath = ActivityPath.CT_ADAPT) =>
+        dispatch({
+          type: 'INIT_SESSION',
+          payload: { studentId, group, mode, activityPath },
+        }),
       setAnswer: (key, value) =>
         dispatch({ type: 'SET_ANSWER', payload: { key, value } }),
       setDetectedDifficulty: (d) =>
@@ -198,6 +266,8 @@ export function SessionProvider({ children }) {
         dispatch({ type: 'UPDATE_ABSTRACTION_ROWS', payload: rows }),
       updateAlgoNodes: (nodes) =>
         dispatch({ type: 'UPDATE_ALGO_NODES', payload: nodes }),
+      updateRenatoWork: (patch) =>
+        dispatch({ type: 'UPDATE_RENATO_WORK', payload: patch }),
       resetSession: () => dispatch({ type: 'RESET_SESSION' }),
     }),
     [],

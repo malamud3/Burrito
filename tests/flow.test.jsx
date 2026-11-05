@@ -166,3 +166,57 @@ test('active session resumes at its last phase after reload', () => {
   expect(screen.getByPlaceholderText('כתוב/י כאן את הפתרון שלך...')).toHaveValue('תשובה שנשמרה');
   expect(screen.queryByPlaceholderText('הכנס קוד משתתף/ת')).not.toBeInTheDocument();
 });
+
+test('Renato path opens its four-card function worksheet and persists its work', () => {
+  const { unmount } = render(<App />);
+  typeInto(screen.getByPlaceholderText('הכנס קוד משתתף/ת'), 'R-S01');
+  typeInto(screen.getAllByRole('combobox')[0], 'adaptive');
+  typeInto(screen.getByLabelText('מסלול פעילות'), 'renato');
+  click('התחל/י');
+
+  expect(screen.getByRole('heading', { name: 'כלי עזר לחקירת פונקציות' })).toBeInTheDocument();
+  expect(screen.getByRole('heading', { name: 'תחום ההגדרה' })).toBeInTheDocument();
+  expect(screen.getByRole('heading', { name: 'נקודות החשודות כנקודות קיצון' })).toBeInTheDocument();
+  expect(screen.getByRole('heading', { name: 'אסימפטוטות מקבילות לצירים' })).toBeInTheDocument();
+  expect(screen.getByRole('heading', { name: 'נקודות חיתוך עם הצירים' })).toBeInTheDocument();
+
+  expect(screen.getByText('f(x) = x² / (x² − 4x + 3)')).toBeInTheDocument();
+  fireEvent.click(screen.getAllByRole('button', { name: 'חשב והזן' })[0]);
+  fireEvent.click(screen.getByRole('button', { name: 'רקע משובץ' }));
+  expect(screen.getByRole('button', { name: 'רקע חלק' })).toHaveAttribute('aria-pressed', 'false');
+  fireEvent.click(screen.getByRole('button', { name: 'רקע חלק' }));
+  fireEvent.click(screen.getByRole('button', { name: 'מלא טבלה תקינה' }));
+  const leftIntervalSign = screen.getByLabelText("f'(x) — x < 0");
+  typeInto(leftIntervalSign, '+');
+  expect(screen.getByText('קיימת אי־התאמה בטבלה. בדקו את התאים המסומנים.')).toBeInTheDocument();
+  typeInto(leftIntervalSign, '-');
+  expect(screen.queryByText('קיימת אי־התאמה בטבלה. בדקו את התאים המסומנים.')).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: 'שלב 1: סימון אסימפטוטות ונקודות' }));
+  fireEvent.click(screen.getByRole('button', { name: 'תחום 2' }));
+  fireEvent.click(screen.getByRole('button', { name: 'חשב ושמור במטמון' }));
+  expect(document.querySelectorAll('.renato-function-curve')).toHaveLength(1);
+
+  const savedSession = JSON.parse(localStorage.getItem('ctAdapt.session'));
+  expect(savedSession.activityPath).toBe('renato');
+  expect(savedSession.renatoWork.functionExpression).toBe('x² / (x² − 4x + 3)');
+  expect(savedSession.renatoWork.cards.domain.answer).toBe('x ≠ 1, x ≠ 3');
+  expect(savedSession.renatoWork.grid).toBe(true);
+  expect(savedSession.renatoWork.table.columns[0].derivative).toBe('-');
+  expect(savedSession.renatoWork.valueCache['0']).toBe('0');
+  expect(savedSession.renatoWork.cacheNotification).toBe('נשמר בזיכרון המטמון: f(0) = 0.');
+  expect(savedSession.renatoWork.graphMarkers).toBe(true);
+  expect(savedSession.renatoWork.drawnDomains[2]).toBe(true);
+
+  unmount();
+  render(<App />);
+  expect(screen.getByText('f(x) = x² / (x² − 4x + 3)')).toBeInTheDocument();
+  expect(screen.getByLabelText('תשובה')).toHaveValue('x ≠ 1, x ≠ 3');
+  expect(screen.getByRole('button', { name: 'רקע משובץ' })).toHaveAttribute('aria-pressed', 'true');
+  expect(screen.getByRole('button', { name: 'שלב 1: הסתרת אסימפטוטות ונקודות' })).toHaveAttribute('aria-pressed', 'true');
+  expect(screen.getByRole('button', { name: 'תחום 2 ✓' })).toHaveAttribute('aria-pressed', 'true');
+  expect(screen.getByText('נשמר בזיכרון המטמון: f(0) = 0.')).toBeInTheDocument();
+  expect(document.querySelectorAll('.renato-function-curve')).toHaveLength(1);
+
+  click('סיימתי את חקירת הפונקציה');
+  expect(screen.getByText('סיימת! תודה רבה!')).toBeInTheDocument();
+});

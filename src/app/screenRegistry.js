@@ -12,6 +12,7 @@ import AnalogScreen from '../components/screens/AnalogScreen';
 import ReturnScreen from '../components/screens/ReturnScreen';
 import TransferScreen from '../components/screens/TransferScreen';
 import EffortScreen from '../components/screens/EffortScreen';
+import RenatoScreen from '../components/screens/RenatoScreen';
 import CompletionScreen from '../components/screens/CompletionScreen';
 import ResearcherDashboard from '../components/screens/ResearcherDashboard';
 
@@ -24,6 +25,7 @@ export const SCREEN_REGISTRY = {
   [Phase.RETURN]: ReturnScreen,
   [Phase.TRANSFER]: TransferScreen,
   [Phase.EFFORT]: EffortScreen,
+  [Phase.RENATO]: RenatoScreen,
   [Phase.COMPLETION]: CompletionScreen,
   [Phase.DASHBOARD]: ResearcherDashboard,
 };

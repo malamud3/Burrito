@@ -12,8 +12,14 @@ export const Phase = Object.freeze({
   RETURN: 'return',
   TRANSFER: 'transfer',
   EFFORT: 'effort',
+  RENATO: 'renato',
   COMPLETION: 'completion',
   DASHBOARD: 'dashboard',
+});
+
+export const ActivityPath = Object.freeze({
+  CT_ADAPT: 'ct-adapt',
+  RENATO: 'renato',
 });
 
 export const Group = Object.freeze({

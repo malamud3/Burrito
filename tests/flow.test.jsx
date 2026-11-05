@@ -8,6 +8,8 @@ import { useLogContext } from '../src/context/LogContext';
 const click = (name) => fireEvent.click(screen.getByRole('button', { name: new RegExp(name) }));
 const typeInto = (el, value) => fireEvent.change(el, { target: { value } });
 
+beforeEach(() => localStorage.clear());
+
 test('full adaptive student flow with help request → analog → hints → transfer → effort → completion', async () => {
   vi.useFakeTimers();
   render(<App />);
@@ -147,4 +149,20 @@ test('session and logs restore from localStorage after reload', () => {
 
   expect(screen.getByTestId('student-id')).toHaveTextContent('S99');
   expect(screen.getByTestId('log-count')).toHaveTextContent('1');
+});
+
+test('active session resumes at its last phase after reload', () => {
+  localStorage.setItem('ctAdapt.session', JSON.stringify({
+    studentId: 'S100',
+    group: 'adaptive',
+    mode: 'student',
+    isActive: true,
+    answers: { main: 'תשובה שנשמרה' },
+  }));
+  localStorage.setItem('ctAdapt.phase', 'solving');
+
+  render(<App />);
+
+  expect(screen.getByPlaceholderText('כתוב/י כאן את הפתרון שלך...')).toHaveValue('תשובה שנשמרה');
+  expect(screen.queryByPlaceholderText('הכנס קוד משתתף/ת')).not.toBeInTheDocument();
 });

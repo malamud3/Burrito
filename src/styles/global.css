@@ -1006,6 +1006,31 @@ label { margin-bottom: 7px; color: #494840; font-size: 0.9rem; font-weight: 600;
 }
 .login-subtitle { margin: 0 0 28px; color: var(--text2); text-align: center; }
 .login-field { margin-bottom: 16px; }
+.login-path-picker {
+    display: grid;
+    gap: 10px;
+    margin: 22px 0 16px;
+    padding: 0;
+    border: 0;
+}
+.login-path-picker legend { margin-bottom: 10px; font-weight: 700; }
+.login-path-option {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 14px;
+    border: 1px solid #ded9cb;
+    border-radius: 12px;
+    background: #fffdf8;
+    cursor: pointer;
+}
+.login-path-option:has(input:checked) {
+    border-color: #66836b;
+    background: #f1f3eb;
+}
+.login-path-option input { margin-top: 4px; accent-color: #405e49; }
+.login-path-option > span { display: grid; gap: 4px; }
+.login-path-option > span > span { color: var(--text2); font-size: 0.9rem; }
 .login-actions { margin-top: 24px; }
 .login-actions .btn { width: 100%; }
 .login-research-notice, .study-protocol-note {

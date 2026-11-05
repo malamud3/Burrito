@@ -38,7 +38,7 @@ export default function ResearcherDashboard() {
     0,
   );
   const stats = [
-    { label: 'משתתפים שהוקצו', value: participantCount },
+    { label: 'משתתפים', value: participantCount },
     { label: 'זמן למידה מצטבר', value: formatTime(learningSeconds) },
     { label: 'סה"כ פעולות', value: summary.totalActions },
     { label: 'משך כולל', value: formatTime(summary.totalDurationSeconds) },

@@ -9,15 +9,43 @@ import React, {
   useState,
   useCallback,
   useMemo,
+  useEffect,
 } from 'react';
 import { Phase } from '../core/types/enums';
 import { PHASE_ORDER } from '../core/constants/phases';
+import { useSessionContext } from './SessionContext';
 
 const PhaseContext = createContext(null);
+const STORAGE_KEY = 'ctAdapt.phase';
+
+const readStoredPhase = () => {
+  if (typeof window === 'undefined' || !window.localStorage) return Phase.LOGIN;
+
+  try {
+    const storedPhase = window.localStorage.getItem(STORAGE_KEY);
+    return Object.values(Phase).includes(storedPhase) ? storedPhase : Phase.LOGIN;
+  } catch (error) {
+    console.warn('Failed to restore phase from localStorage', error);
+    return Phase.LOGIN;
+  }
+};
 
 export function PhaseProvider({ children }) {
-  const [currentPhase, setCurrentPhase] = useState(Phase.LOGIN);
-  const [phaseHistory, setPhaseHistory] = useState([Phase.LOGIN]);
+  const { session } = useSessionContext();
+  const [currentPhase, setCurrentPhase] = useState(() =>
+    session.isActive ? readStoredPhase() : Phase.LOGIN,
+  );
+  const [phaseHistory, setPhaseHistory] = useState([currentPhase]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.localStorage) return;
+
+    if (session.isActive) {
+      window.localStorage.setItem(STORAGE_KEY, currentPhase);
+    } else {
+      window.localStorage.removeItem(STORAGE_KEY);
+    }
+  }, [currentPhase, session.isActive]);
 
   const navigateTo = useCallback((phase) => {
     setCurrentPhase(phase);

@@ -1,6 +1,6 @@
 import { detectDifficulty, inferWeakestSkill } from '../src/services/DifficultyDetectionService';
 import { selectAnalogTask } from '../src/services/AnalogTaskSelector';
-import { computePhaseDurations } from '../src/services/LogAnalyticsService';
+import { computeLearningDurations, computePhaseDurations } from '../src/services/LogAnalyticsService';
 import { logsToCSV } from '../src/services/ExportService';
 import { CTSkill, LogActionType, Group } from '../src/core/types/enums';
 
@@ -51,6 +51,18 @@ test('phase durations', () => {
     log(LogActionType.EDIT, null, 12000),
   ];
   expect(computePhaseDurations(logs)).toEqual([{ phase: 'problem', seconds: 5 }, { phase: 'solving', seconds: 7 }]);
+});
+test('learning durations use paired start and completion events per session', () => {
+  const logs = [
+    { ...log(LogActionType.LEARNING_START, null, 1000), data: { sessionId: 's1', startedAt: 1000 } },
+    { ...log(LogActionType.LEARNING_START, null, 2000), data: { sessionId: 's2', startedAt: 2000 } },
+    { ...log(LogActionType.LEARNING_COMPLETE, null, 21000), data: { sessionId: 's1', activityPath: 'classic' } },
+    { ...log(LogActionType.LEARNING_COMPLETE, null, 32000), data: { sessionId: 's2', activityPath: 'renato', reason: 'time_limit' } },
+  ];
+  expect(computeLearningDurations(logs)).toEqual([
+    { sessionId: 's1', activityPath: 'classic', seconds: 20, reason: 'completed' },
+    { sessionId: 's2', activityPath: 'renato', seconds: 30, reason: 'time_limit' },
+  ]);
 });
 test('csv escapes quotes + BOM', () => {
   const csv = logsToCSV([{ id: 'a', isoTime: 'x', timestamp: 1, actionType: 'edit', skill: null, data: { v: 'he said "hi"' } }]);

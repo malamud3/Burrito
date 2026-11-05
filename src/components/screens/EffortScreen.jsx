@@ -25,7 +25,7 @@ export default function EffortScreen() {
   }, [allComplete, goToCompletion, show]);
 
   return (
-    <div className="container">
+    <div className="container learning-screen effort-screen">
       <ProgressBar />
 
       <div className="card" style={{ textAlign: 'center', padding: 24 }}>

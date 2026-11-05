@@ -37,7 +37,7 @@ export default function TransferScreen() {
   }, [session.answers, log, goToEffort, show]);
 
   return (
-    <div className="container">
+    <div className="container learning-screen transfer-screen">
       <ProgressBar />
 
       <div className="card" style={{ textAlign: 'center', padding: 24 }}>
@@ -50,7 +50,6 @@ export default function TransferScreen() {
 
       <ProblemBox
         label={TRANSFER_PROBLEM.label}
-        labelColor="var(--accent2)"
         text={TRANSFER_PROBLEM.text}
         question={TRANSFER_PROBLEM.question}
       />

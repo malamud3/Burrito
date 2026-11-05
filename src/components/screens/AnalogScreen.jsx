@@ -36,7 +36,7 @@ export default function AnalogScreen() {
 
   if (!task) {
     return (
-      <div className="container">
+      <div className="container learning-screen analog-screen">
         <div className="card" style={{ textAlign: 'center', padding: 40 }}>
           <p>שגיאה: לא נבחרה משימת תמיכה.</p>
           <div className="btn-group" style={{ justifyContent: 'center', marginTop: 16 }}>
@@ -50,7 +50,7 @@ export default function AnalogScreen() {
   }
 
   return (
-    <div className="container">
+    <div className="container learning-screen analog-screen">
       <ProgressBar />
 
       <div className="analog-banner">
@@ -62,7 +62,6 @@ export default function AnalogScreen() {
 
       <ProblemBox
         label={task.label}
-        labelColor="var(--accent1)"
         text={task.text}
         question={task.question}
       />

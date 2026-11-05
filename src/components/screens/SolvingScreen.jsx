@@ -66,7 +66,7 @@ export default function SolvingScreen() {
   }, [log, forceDetection, delayedGoToDifficulty, show]);
 
   return (
-    <div className="container">
+    <div className="container learning-screen solving-screen">
       <ProgressBar />
 
       <ProblemReminder

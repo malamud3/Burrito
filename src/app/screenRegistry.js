@@ -5,27 +5,28 @@
 
 import { Phase } from '../core/types/enums';
 import LoginScreen from '../components/screens/LoginScreen';
-import ProblemScreen from '../components/screens/ProblemScreen';
-import SolvingScreen from '../components/screens/SolvingScreen';
-import DifficultyScreen from '../components/screens/DifficultyScreen';
-import AnalogScreen from '../components/screens/AnalogScreen';
-import ReturnScreen from '../components/screens/ReturnScreen';
-import TransferScreen from '../components/screens/TransferScreen';
-import EffortScreen from '../components/screens/EffortScreen';
-import RenatoScreen from '../components/screens/RenatoScreen';
+import PreAssessmentScreen from '../components/screens/PreAssessmentScreen';
+import RenatoScreen, {
+  RenatoAsymptotesScreen,
+  RenatoExtremaScreen,
+  RenatoGraphScreen,
+  RenatoInterceptsScreen,
+} from '../components/screens/RenatoScreen';
+import ClassicScreen from '../components/screens/ClassicScreen';
+import TransferAssessmentScreen from '../components/screens/TransferAssessmentScreen';
 import CompletionScreen from '../components/screens/CompletionScreen';
 import ResearcherDashboard from '../components/screens/ResearcherDashboard';
 
 export const SCREEN_REGISTRY = {
   [Phase.LOGIN]: LoginScreen,
-  [Phase.PROBLEM]: ProblemScreen,
-  [Phase.SOLVING]: SolvingScreen,
-  [Phase.DIFFICULTY]: DifficultyScreen,
-  [Phase.ANALOG]: AnalogScreen,
-  [Phase.RETURN]: ReturnScreen,
-  [Phase.TRANSFER]: TransferScreen,
-  [Phase.EFFORT]: EffortScreen,
+  [Phase.PRE_ASSESSMENT]: PreAssessmentScreen,
+  [Phase.CLASSIC]: ClassicScreen,
   [Phase.RENATO]: RenatoScreen,
+  [Phase.RENATO_ASYMPTOTES]: RenatoAsymptotesScreen,
+  [Phase.RENATO_INTERCEPTS]: RenatoInterceptsScreen,
+  [Phase.RENATO_EXTREMA]: RenatoExtremaScreen,
+  [Phase.RENATO_GRAPH]: RenatoGraphScreen,
+  [Phase.TRANSFER_EXAM]: TransferAssessmentScreen,
   [Phase.COMPLETION]: CompletionScreen,
   [Phase.DASHBOARD]: ResearcherDashboard,
 };

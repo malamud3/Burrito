@@ -1,123 +1,77 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useSessionContext } from '../../context/SessionContext';
-import { LogActionType } from '../../core/types/enums';
+import { LogActionType, Phase } from '../../core/types/enums';
 import { RENATO_FUNCTION, RENATO_TABLE_COLUMNS } from '../../core/constants/renato';
+import { STUDY_DURATION_MINUTES, STUDY_HINTS } from '../../core/constants/study';
 import { useLogger } from '../../hooks/useLogger';
 import { usePhaseNavigation } from '../../hooks/usePhaseNavigation';
+import { useNotification } from '../../context/NotificationContext';
 import ProgressBar from '../layout/ProgressBar';
+import FunctionFraction from '../math/FunctionFraction';
+import FunctionGraph from '../math/FunctionGraph';
+import StudyHint from '../math/StudyHint';
 
 const CARD_DEFINITIONS = [
   {
     id: 'domain',
     title: 'תחום ההגדרה',
     description: 'מהו תחום ההגדרה של הפונקציה?',
-    fields: [{ key: 'answer', label: 'תשובה', placeholder: 'x ≠ 1, x ≠ 3' }],
-    button: 'חשב והזן',
-    notes: [
-      'x² − 4x + 3 ≠ 0',
-      '(x − 1)(x − 3) ≠ 0',
-      'x ≠ 1, x ≠ 3',
-    ],
-  },
-  {
-    id: 'extrema',
-    title: 'נקודות החשודות כנקודות קיצון',
-    description: 'מציאת נקודות חשודות ובדיקת שינוי סימן הנגזרת',
-    fields: [
-      { key: 'suspectedX', label: 'נקודות חשודות (x)', placeholder: 'x = 0, x = 1.5' },
-      { key: 'points', label: 'נקודות קיצון (לאחר הטבלה)', placeholder: 'Min (0, 0), Max (1.5, −3)' },
-      { key: 'derivative', label: "הנגזרת f'(x)", placeholder: '(-4x² + 6x) / (x² − 4x + 3)²' },
-    ],
-    checkDomain: true,
-    button: 'גזור וחשב',
-    notes: [
-      "f'(x) = [2x(x² − 4x + 3) − x²(2x − 4)] / (x² − 4x + 3)²",
-      "f'(x) = (-4x² + 6x) / (x² − 4x + 3)²",
-      '−4x² + 6x = 0  ⇒  x = 0, x = 1.5',
-      'את סוג הקיצון קובעים לפי שינוי סימן הנגזרת בטבלה.',
-    ],
+    fields: [{ key: 'answer', label: 'תחום ההגדרה שמצאת', placeholder: 'רשום/י את ערכי x שאינם בתחום' }],
+    notes: STUDY_HINTS.domain,
   },
   {
     id: 'asymptotes',
     title: 'אסימפטוטות מקבילות לצירים',
     description: 'אסימפטוטות אנכיות ואופקיות',
     fields: [
-      { key: 'vertical', label: 'אסימפטוטות אנכיות', placeholder: 'x = 1, x = 3' },
-      { key: 'horizontal', label: 'אסימפטוטה אופקית', placeholder: 'y = 1' },
+      { key: 'vertical', label: 'אסימפטוטות אנכיות', placeholder: 'בדוק/י אילו ערכים מחוץ לתחום יוצרים אסימפטוטה' },
+      { key: 'horizontal', label: 'אסימפטוטה אופקית', placeholder: 'השווה/י בין דרגות המונה והמכנה' },
     ],
     checkDomain: true,
-    button: 'חשב והזן',
-    notes: [
-      'אנכיות: המכנה מתאפס ב־x = 1 וב־x = 3; המונה אינו מתאפס שם.',
-      'אופקית: דרגות המונה והמכנה שוות, ולכן יחס המקדמים הוא 1/1.',
-      'y = 1 היא אסימפטוטה אופקית; הגרף יכול לחצות אותה בתוך תחום ההגדרה.',
-    ],
+    notes: STUDY_HINTS.asymptotes,
   },
   {
     id: 'intercepts',
     title: 'נקודות חיתוך עם הצירים',
     description: 'בחיתוך עם y מציבים x = 0; בחיתוך עם x משווים y ל־0',
     fields: [
-      { key: 'yAxis', label: 'חיתוך עם ציר y (x = 0)', placeholder: '(0, 0)' },
-      { key: 'xAxis', label: 'חיתוך עם ציר x (y = 0)', placeholder: '(0, 0)' },
+      { key: 'yAxis', label: 'חיתוך עם ציר y', placeholder: 'הצב/י x = 0 וחישב/י את ערך הפונקציה' },
+      { key: 'xAxis', label: 'חיתוך עם ציר x', placeholder: 'פתור/י f(x) = 0 ובדוק/י את תחום ההגדרה' },
     ],
     checkDomain: true,
-    button: 'חשב ושמור במטמון',
-    notes: [
-      'x = 0  ⇒  f(0) = 0² / (0² − 4·0 + 3) = 0  ⇒  (0, 0)',
-      'y = 0  ⇒  x² / (x² − 4x + 3) = 0  ⇒  x = 0  ⇒  (0, 0)',
+    notes: STUDY_HINTS.intercepts,
+  },
+  {
+    id: 'extrema',
+    title: 'נקודות החשודות כנקודות קיצון',
+    description: 'מציאת נקודות חשודות ובדיקת שינוי סימן הנגזרת',
+    fields: [
+      { key: 'suspectedX', label: 'נקודות חשודות (x)', placeholder: 'פתור/י f′(x) = 0 ובדוק/י תחום' },
+      { key: 'points', label: 'נקודות קיצון', placeholder: 'מצא/י נקודות בעזרת טבלת הסימנים' },
+      { key: 'derivative', label: "הנגזרת f'(x)", placeholder: 'רשום/י את הנגזרת שמצאת' },
     ],
+    checkDomain: true,
+    notes: STUDY_HINTS.extrema,
   },
 ];
 
-const GRAPH_WIDTH = 700;
-const GRAPH_HEIGHT = 420;
-const GRAPH_DOMAINS = [
-  { id: 1, label: 'תחום 1', interval: 'x ≤ 0', description: 'יורדת עד Min (0, 0)' },
-  { id: 2, label: 'תחום 2', interval: '0 < x < 1', description: 'עולה וחוצה את y = 1' },
-  { id: 3, label: 'תחום 3', interval: '1 < x < 3', description: 'עולה ל־Max ואז יורדת' },
-  { id: 4, label: 'תחום 4', interval: 'x > 3', description: 'יורדת ומתקרבת ל־y = 1' },
+const RENATO_CARD_PHASES = [
+  Phase.RENATO,
+  Phase.RENATO_ASYMPTOTES,
+  Phase.RENATO_INTERCEPTS,
+  Phase.RENATO_EXTREMA,
 ];
 
-function graphCoordinates(x, y) {
-  return {
-    x: (x + 3.5) * 70,
-    y: (4.5 - y) * 42,
-  };
-}
-
-function functionPath(from, to, step) {
-  const points = [];
-  for (let x = from; x <= to + step / 2; x += step) {
-    const y = (x * x) / (x * x - 4 * x + 3);
-    const point = graphCoordinates(x, y);
-    if (point.y >= 8 && point.y <= GRAPH_HEIGHT - 8) {
-      points.push(`${points.length ? 'L' : 'M'} ${point.x.toFixed(1)} ${point.y.toFixed(1)}`);
-    }
-  }
-  return points.join(' ');
-}
-
-function RenatoCard({ definition, value, onChange, onSolve }) {
-  const { id, title, description, fields, checkDomain, button, notes } = definition;
+function RenatoCard({ definition, value, onChange }) {
+  const { id, title, description, fields, checkDomain, notes } = definition;
   return (
     <article className={`renato-card renato-card-${id}`}>
       <header className="renato-card-heading">
         <div>
+          <span className="renato-hint-label">רמז לתהליך החשיבה</span>
           <h3>{title}</h3>
           <p>{description}</p>
         </div>
-        <label className="renato-order">
-          <span>סדר שלב</span>
-          <input
-            type="number"
-            min="1"
-            max="4"
-            aria-label={`סדר פתרון: ${title}`}
-            value={value.order}
-            onChange={(event) => onChange(id, 'order', event.target.value)}
-          />
-        </label>
       </header>
       <div className="renato-card-fields">
         {fields.map(({ key, label, placeholder }) => (
@@ -133,16 +87,8 @@ function RenatoCard({ definition, value, onChange, onSolve }) {
             />
           </label>
         ))}
-        <button className="renato-solve-button" onClick={() => onSolve(id)}>
-          {button}
-        </button>
       </div>
-      <details className="renato-scratchpad" open={id === 'domain'}>
-        <summary>דף טיוטה ודרך הפתרון</summary>
-        <div className="renato-scratchpad-content" dir="ltr">
-          {notes.map((note) => <p key={note}>{note}</p>)}
-        </div>
-      </details>
+      <StudyHint hints={notes} />
       {checkDomain && (
         <label className="renato-checkbox">
           <input
@@ -157,7 +103,7 @@ function RenatoCard({ definition, value, onChange, onSolve }) {
   );
 }
 
-function FunctionTable({ columns, values, onChange, onFillCorrect, tableErrors }) {
+function FunctionTable({ columns, values, onChange }) {
   const derivativeOptions = ['', '+', '-', '0', '///'];
   const behaviorOptions = ['', '↗', '↘', 'Min', 'Max', '///'];
   return (
@@ -167,15 +113,7 @@ function FunctionTable({ columns, values, onChange, onFillCorrect, tableErrors }
           <h2>טבלה — איסוף וזיהוי תבניות</h2>
           <p>שורה 1: ערכי x • שורה 2: סימן הנגזרת • שורה 3: התנהגות הפונקציה</p>
         </div>
-        <button className="renato-secondary-button" onClick={onFillCorrect}>
-          מלא טבלה תקינה
-        </button>
       </div>
-      {tableErrors.length > 0 && (
-        <p className="renato-table-alert" role="status">
-          קיימת אי־התאמה בטבלה. בדקו את התאים המסומנים.
-        </p>
-      )}
       <div className="renato-table-scroll" dir="ltr">
         <table className="renato-table">
           <thead>
@@ -202,12 +140,10 @@ function FunctionTable({ columns, values, onChange, onFillCorrect, tableErrors }
                 <th scope="row">{label}</th>
                 {columns.map((column) => {
                   const value = values[column.id]?.[field] || '';
-                  const expected = column[field];
-                  const invalid = value !== '' && value !== expected;
                   return (
                     <td
                       key={column.id}
-                      className={`${column.isPoint ? 'is-critical-point ' : ''}${invalid ? 'is-invalid' : ''}${value === '///' ? ' is-undefined' : ''}`}
+                      className={`${column.isPoint ? 'is-critical-point ' : ''}${value === '///' ? 'is-undefined' : ''}`}
                     >
                       <select
                         aria-label={`${label} — ${column.xLabel}`}
@@ -228,185 +164,21 @@ function FunctionTable({ columns, values, onChange, onFillCorrect, tableErrors }
           </tbody>
         </table>
       </div>
-      <div className="renato-domain-links">
-        {GRAPH_DOMAINS.map(({ id, label, interval, description }) => (
-          <div className="renato-domain-link" key={id}>
-            <b>{label} ({interval})</b>
-            <span>{description}</span>
-          </div>
-        ))}
-      </div>
     </section>
   );
 }
 
-function FunctionGraph({ work, onUpdate }) {
-  const [showCrossingNote, setShowCrossingNote] = useState(false);
-  const graphPathDefinitions = {
-    1: [-3.4, 0, 0.05],
-    2: [0, 0.84, 0.02],
-    3: [1.18, 2.75, 0.03],
-    4: [3.52, 6.4, 0.05],
-  };
-
-  const toggleDomain = (id) => {
-    onUpdate({ drawnDomains: { ...work.drawnDomains, [id]: !work.drawnDomains[id] } });
-  };
-
-  return (
-    <section className="renato-panel renato-graph-panel">
-      <div className="renato-panel-heading">
-        <div>
-          <h2>גרף הפונקציה — צומת סנכרון</h2>
-          <p>1. סמנו מאפיינים על הצירים  2–3. בחרו תחום ושרטטו את ענף הפונקציה</p>
-        </div>
-        <div className="renato-graph-controls">
-          <button
-            className="renato-secondary-button"
-            onClick={() => onUpdate({ grid: !work.grid })}
-            aria-pressed={work.grid}
-          >
-            {work.grid ? 'רקע משובץ' : 'רקע חלק'}
-          </button>
-          <button
-            className="renato-secondary-button"
-            onClick={() => onUpdate({
-              graphAsymptoteStyle: work.graphAsymptoteStyle === 'dashed' ? 'solid' : 'dashed',
-            })}
-          >
-            אסימפטוטה אנכית: {work.graphAsymptoteStyle === 'dashed' ? 'קו מקווקו' : 'קו מלא'}
-          </button>
-        </div>
-      </div>
-
-      <div className="renato-plot-steps">
-        <button
-          className="renato-secondary-button"
-          onClick={() => onUpdate({ graphMarkers: !work.graphMarkers })}
-          aria-pressed={work.graphMarkers}
-        >
-          שלב 1: {work.graphMarkers ? 'הסתרת' : 'סימון'} אסימפטוטות ונקודות
-        </button>
-        <span>שלבים 2–3: שרטוט לפי תחום</span>
-        {GRAPH_DOMAINS.map(({ id }) => (
-          <button
-            key={id}
-            className={`renato-domain-button${work.drawnDomains[id] ? ' is-selected' : ''}`}
-            onClick={() => toggleDomain(id)}
-            aria-pressed={work.drawnDomains[id]}
-          >
-            תחום {id}{work.drawnDomains[id] ? ' ✓' : ''}
-          </button>
-        ))}
-        <button
-          className="renato-help-button"
-          onClick={() => setShowCrossingNote((shown) => !shown)}
-          aria-expanded={showCrossingNote}
-        >
-          האם מותר לחצות אסימפטוטה אופקית?
-        </button>
-      </div>
-
-      {showCrossingNote && (
-        <p className="renato-crossing-note">
-          כן. אסימפטוטה אופקית מתארת את התנהגות הפונקציה כאשר x שואף לאינסוף;
-          הגרף יכול לחצות אותה בתוך תחום ההגדרה. כאן הוא חוצה את y = 1 בנקודה (0.75, 1).
-        </p>
-      )}
-
-      <svg
-        className={`renato-drawing-board${work.grid ? ' is-gridded' : ''}`}
-        direction="ltr"
-        viewBox={`0 0 ${GRAPH_WIDTH} ${GRAPH_HEIGHT}`}
-        role="img"
-        aria-label="גרף הפונקציה עם צירים, אסימפטוטות וארבעה תחומים לשרטוט"
-      >
-        <defs>
-          <pattern id="renato-small-grid" width="17.5" height="21" patternUnits="userSpaceOnUse">
-            <path d="M 17.5 0 L 0 0 0 21" className="renato-grid-line" />
-          </pattern>
-          <pattern id="renato-major-grid" width="70" height="42" patternUnits="userSpaceOnUse">
-            <rect width="70" height="42" fill="url(#renato-small-grid)" />
-            <path d="M 70 0 L 0 0 0 42" className="renato-grid-major-line" />
-          </pattern>
-        </defs>
-        {work.grid && <rect width={GRAPH_WIDTH} height={GRAPH_HEIGHT} fill="url(#renato-major-grid)" />}
-        <line x1="15" y1="189" x2="685" y2="189" className="renato-axis" />
-        <polygon points="690,189 680,184 680,194" className="renato-axis-arrow" />
-        <polygon points="10,189 20,184 20,194" className="renato-axis-arrow" />
-        <line x1="245" y1="12" x2="245" y2="408" className="renato-axis" />
-        <polygon points="245,7 240,17 250,17" className="renato-axis-arrow" />
-        <polygon points="245,413 240,403 250,403" className="renato-axis-arrow" />
-        <text x="675" y="178" className="renato-axis-label">x</text>
-        <text x="256" y="22" className="renato-axis-label">y</text>
-        {[-3, -2, -1, 1, 2, 3, 4, 5, 6].map((x) => {
-          const point = graphCoordinates(x, 0);
-          return (
-            <g key={`xtick-${x}`}>
-              <line x1={point.x} y1="185" x2={point.x} y2="193" className="renato-tick" />
-              <text x={point.x} y="205" className="renato-tick-label" textAnchor="middle">{x}</text>
-            </g>
-          );
-        })}
-        {[-5, -4, -3, -2, -1, 1, 2, 3, 4].map((y) => {
-          const point = graphCoordinates(0, y);
-          return (
-            <g key={`ytick-${y}`}>
-              <line x1="241" y1={point.y} x2="249" y2={point.y} className="renato-tick" />
-              <text x="233" y={point.y + 3} className="renato-tick-label" textAnchor="end">{y}</text>
-            </g>
-          );
-        })}
-        {work.graphMarkers && (
-          <g className="renato-graph-features">
-            {[1, 3].map((x) => {
-              const point = graphCoordinates(x, 0);
-              return (
-                <g key={`vertical-${x}`}>
-                  <line
-                    x1={point.x}
-                    y1="15"
-                    x2={point.x}
-                    y2="405"
-                    className={`renato-asymptote${work.graphAsymptoteStyle === 'dashed' ? ' is-dashed' : ''}`}
-                  />
-                  <text x={point.x - 4} y="45" className="renato-feature-label" textAnchor="end">x = {x}</text>
-                </g>
-              );
-            })}
-            <line x1="20" y1="147" x2="680" y2="147" className="renato-asymptote is-dashed" />
-            <text x="665" y="140" className="renato-feature-label" textAnchor="end">y = 1</text>
-            <circle cx="245" cy="189" r="5" className="renato-extremum-point" />
-            <text x="235" y="206" className="renato-feature-label" textAnchor="end">Min (0, 0)</text>
-            <circle cx="350" cy="315" r="5" className="renato-extremum-point" />
-            <text x="350" y="305" className="renato-feature-label" textAnchor="middle">Max (1.5, −3)</text>
-          </g>
-        )}
-        {Object.entries(graphPathDefinitions).map(([domainId, [from, to, step]]) => (
-          work.drawnDomains[domainId] && (
-            <path
-              key={`domain-${domainId}`}
-              d={functionPath(from, to, step)}
-              className="renato-function-curve"
-            />
-          )
-        ))}
-        {work.drawnDomains[2] && (
-          <circle cx={(0.75 + 3.5) * 70} cy="147" r="4" className="renato-crossing-point" />
-        )}
-      </svg>
-    </section>
-  );
-}
-
-export default function RenatoScreen() {
-  const { session, updateRenatoWork } = useSessionContext();
+export default function RenatoScreen({ step = Phase.RENATO } = {}) {
+  const { session, updateRenatoWork, updateGraphWork } = useSessionContext();
   const { log } = useLogger();
-  const { goToCompletion } = usePhaseNavigation();
-  const [showSignHelper, setShowSignHelper] = useState(false);
-  const [selectedHelperColumn, setSelectedHelperColumn] = useState('left-of-zero');
+  const { goTo, goToTransferAssessment } = usePhaseNavigation();
+  const { show } = useNotification();
   const work = session.renatoWork;
+  const graphWork = session.graphWork;
   const columns = RENATO_TABLE_COLUMNS;
+  const stepIndex = RENATO_CARD_PHASES.indexOf(step);
+  const isGraphStep = step === Phase.RENATO_GRAPH;
+  const currentDefinition = CARD_DEFINITIONS[stepIndex];
   const tableValues = Object.fromEntries(
     work.table.columns.map(({ id, ...values }) => [id, values]),
   );
@@ -437,6 +209,7 @@ export default function RenatoScreen() {
   };
 
   const updateGraph = (patch) => {
+    updateGraphWork(patch);
     updateRenatoWork(patch);
     log(LogActionType.EDIT, {
       field: 'renato.graph',
@@ -444,76 +217,44 @@ export default function RenatoScreen() {
     });
   };
 
-  const solveCard = (cardId) => {
-    const solvedAnswers = {
-      domain: { answer: 'x ≠ 1, x ≠ 3' },
-      extrema: {
-        suspectedX: 'x = 0, x = 1.5',
-        points: 'Min (0, 0), Max (1.5, −3)',
-        derivative: "f'(x) = (-4x² + 6x) / (x² − 4x + 3)²",
-        checked: true,
-      },
-      asymptotes: { vertical: 'x = 1, x = 3', horizontal: 'y = 1', checked: true },
-      intercepts: { yAxis: '(0, 0)', xAxis: '(0, 0)', checked: true },
-    };
-    updateRenatoWork({
-      cards: {
-        ...work.cards,
-        [cardId]: { ...work.cards[cardId], ...solvedAnswers[cardId] },
-      },
-      ...(cardId === 'intercepts'
-        ? {
-          valueCache: { ...work.valueCache, 0: '0' },
-          cacheNotification: 'נשמר בזיכרון המטמון: f(0) = 0.',
-        }
-        : cardId === 'extrema'
-          ? {
-            valueCache: { ...work.valueCache, 0: '0', 1.5: '-3' },
-            cacheNotification: work.valueCache[0] !== undefined
-              ? 'f(0) = 0 נשלף מהמטמון; f(1.5) = −3 חושב.'
-              : work.cacheNotification,
-          }
-          : {}),
-      ...(cardId === 'domain'
-        ? {
-          table: {
-            ...work.table,
-            columns: work.table.columns.map((column) =>
-              column.id === 'one' || column.id === 'three'
-                ? { ...column, derivative: '///', behavior: '///' }
-                : column,
-            ),
-          },
-        }
-        : {}),
-    });
-    log(LogActionType.EDIT, { field: `renato.${cardId}.solve`, value: solvedAnswers[cardId] });
-  };
+  const nextStep = isGraphStep
+    ? null
+    : (RENATO_CARD_PHASES[stepIndex + 1] || Phase.RENATO_GRAPH);
+  const previousStep = isGraphStep
+    ? Phase.RENATO_EXTREMA
+    : (stepIndex > 0 ? RENATO_CARD_PHASES[stepIndex - 1] : null);
 
-  const fillCorrectTable = () => {
-    updateRenatoWork({
-      table: {
-        ...work.table,
-        columns: columns.map((column) => ({
-          id: column.id,
-          derivative: column.derivative,
-          behavior: column.behavior,
-        })),
-      },
-    });
-    log(LogActionType.EDIT, { field: 'renato.table.fillCorrect' });
-  };
+  const handleFinish = () => {
+    if (!graphWork.graphStrokes?.length) {
+      show('לפני הסיום, יש לשרטט את הפונקציה על מערכת הצירים.', '⚠️');
+      return;
+    }
 
-  const tableErrors = columns.filter((column) => {
-    const value = tableValues[column.id] || {};
-    return (
-      (value.derivative && value.derivative !== column.derivative) ||
-      (value.behavior && value.behavior !== column.behavior)
-    );
-  });
-  const activeHelperColumn =
-    columns.find((column) => column.id === selectedHelperColumn) || columns[0];
-  const helperNumerator = -4 * Number(activeHelperColumn.testX) ** 2 + 6 * Number(activeHelperColumn.testX);
+    log(LogActionType.ANSWER_SUBMIT, {
+      activityPath: 'renato',
+      answerType: 'function_graph',
+      strokeCount: graphWork.graphStrokes.length,
+    });
+    log(LogActionType.ACTIVITY_COMPLETE, {
+      schemaVersion: 1,
+      assessment: {
+        domain: work.cards.domain.answer,
+        derivative: work.cards.extrema.derivative,
+        criticalPoints: work.cards.extrema.suspectedX,
+        extremaPoints: work.cards.extrema.points,
+        verticalAsymptotes: work.cards.asymptotes.vertical,
+        horizontalAsymptote: work.cards.asymptotes.horizontal,
+        yAxisIntercept: work.cards.intercepts.yAxis,
+        xAxisIntercept: work.cards.intercepts.xAxis,
+        signBehavior: work.table.columns,
+        graph: {
+          ...graphWork,
+        },
+      },
+      work: { ...work, graph: graphWork },
+    });
+    goToTransferAssessment();
+  };
 
   return (
     <div className="container-wide renato-screen" dir="rtl">
@@ -522,86 +263,104 @@ export default function RenatoScreen() {
         <span className="renato-eyebrow">מסלול רנאטו סאיג</span>
         <h1>כלי עזר לחקירת פונקציות</h1>
       </header>
+      <p className="study-protocol-note">
+        לרשותכם {STUDY_DURATION_MINUTES} דקות, דף טיוטה וכלי שרטוט דיגיטלי זהה לזה שבמסלול הקלאסי.
+        ניתן לבקש מהמנחה הבהרה טכנית בלבד, ללא רמזים מתמטיים.
+      </p>
 
       <section className="renato-function" aria-label="הפונקציה הנחקרת">
         <span className="renato-function-label">הפונקציה הנחקרת</span>
-        <span className="renato-function-expression" dir="ltr">f(x) = {RENATO_FUNCTION}</span>
+        <FunctionFraction
+          numerator="x²"
+          denominator="x² − 4x + 3"
+          ariaLabel={`f(x) = ${RENATO_FUNCTION}`}
+          className="renato-function-expression"
+        />
       </section>
 
-      <div className="renato-workspace">
-        <section className="renato-cards" aria-label="ארבע כרטיסיות חקירת הפונקציה">
-          <p className="renato-cards-intro">
-            ארבע כרטיסיות תת־הבעיות. מספרו את סדר הפתרון; התשובות נאספות בטבלה ובגרף.
-          </p>
-          {work.cacheNotification && (
-            <p className="renato-cache-note" role="status">{work.cacheNotification}</p>
-          )}
-          {CARD_DEFINITIONS.map((definition) => (
-            <RenatoCard
+      <nav className="renato-step-navigation" aria-label="שלבי חקירת הפונקציה">
+        {CARD_DEFINITIONS.map((definition, index) => {
+          const phase = RENATO_CARD_PHASES[index];
+          return (
+            <button
               key={definition.id}
-              definition={definition}
-              value={work.cards[definition.id]}
-              onChange={updateCard}
-              onSolve={solveCard}
-            />
-          ))}
-        </section>
+              type="button"
+              className={`renato-step-link${step === phase ? ' is-current' : ''}`}
+              aria-current={step === phase ? 'step' : undefined}
+              onClick={() => goTo(phase)}
+            >
+              <span>רמז {index + 1}</span>
+              <strong>{definition.title}</strong>
+            </button>
+          );
+        })}
+        <button
+          type="button"
+          className={`renato-step-link${isGraphStep ? ' is-current' : ''}`}
+          aria-current={isGraphStep ? 'step' : undefined}
+          onClick={() => goTo(Phase.RENATO_GRAPH)}
+        >
+          <span>פתרון מסכם</span>
+          <strong>שרטוט הפונקציה</strong>
+        </button>
+      </nav>
 
+      {currentDefinition && (
+        <section className="renato-single-step" aria-label={currentDefinition.title}>
+          <p className="renato-cards-intro">
+            אפשר לפתור לבד, לפתוח רמז לפי הצורך, ולהמשיך בכל שלב גם אם התשובה עדיין לא הושלמה.
+          </p>
+          <RenatoCard
+            definition={currentDefinition}
+            value={work.cards[currentDefinition.id]}
+            onChange={updateCard}
+          />
+        </section>
+      )}
+
+      {isGraphStep && (
         <div className="renato-results">
           <FunctionTable
             columns={columns}
             values={tableValues}
             onChange={updateTableCell}
-            onFillCorrect={fillCorrectTable}
-            tableErrors={tableErrors}
           />
-          <div className="renato-sign-helper">
-            <button
-              className="renato-secondary-button"
-              onClick={() => setShowSignHelper((shown) => !shown)}
-              aria-expanded={showSignHelper}
-            >
-              עוזר חישוב סימן הנגזרת
-            </button>
-            {showSignHelper && (
-              <div className="renato-sign-helper-content">
-                <label>
-                  תחום לבדיקה
-                  <select
-                    value={selectedHelperColumn}
-                    onChange={(event) => setSelectedHelperColumn(event.target.value)}
-                  >
-                    {columns.filter(({ isPoint }) => !isPoint).map(({ id, testX, xLabel }) => (
-                      <option key={id} value={id}>x = {testX} ({xLabel})</option>
-                    ))}
-                  </select>
-                </label>
-                <p dir="ltr">
-                  −4({activeHelperColumn.testX})² + 6({activeHelperColumn.testX}) = {helperNumerator.toFixed(2)}
-                </p>
-                <p>המכנה בריבוע חיובי, ולכן סימן הנגזרת נקבע לפי המונה.</p>
-                <button
-                  className="renato-secondary-button"
-                  onClick={() => updateTableCell(
-                    activeHelperColumn.id,
-                    'derivative',
-                    helperNumerator > 0 ? '+' : '-',
-                  )}
-                >
-                  הזן {helperNumerator > 0 ? '+' : '-'} לטבלה
-                </button>
-              </div>
-            )}
-          </div>
-          <FunctionGraph work={work} onUpdate={updateGraph} />
+          <FunctionGraph work={graphWork} onUpdate={updateGraph} />
         </div>
-      </div>
+      )}
 
-      <div className="renato-finish">
-        <button className="btn btn-primary" onClick={goToCompletion}>
-          סיימתי את חקירת הפונקציה
-        </button>
+      <div className="renato-step-actions">
+        {previousStep ? (
+          <button className="btn btn-outline" onClick={() => goTo(previousStep)}>
+            ← חזרה
+          </button>
+        ) : <span />}
+        {nextStep ? (
+          <button className="btn btn-primary" onClick={() => goTo(nextStep)}>
+            {nextStep === Phase.RENATO_GRAPH ? 'לשרטוט הפונקציה ←' : 'המשך/י לרמז הבא ←'}
+          </button>
+        ) : (
+          <button className="btn btn-primary" onClick={handleFinish}>
+            הגשת שרטוט וסיום
+          </button>
+        )}
       </div>
     </div>
   );
+}
+
+export function RenatoAsymptotesScreen() {
+  return <RenatoScreen step={Phase.RENATO_ASYMPTOTES} />;
+}
+
+export function RenatoInterceptsScreen() {
+  return <RenatoScreen step={Phase.RENATO_INTERCEPTS} />;
+}
+
+export function RenatoExtremaScreen() {
+  return <RenatoScreen step={Phase.RENATO_EXTREMA} />;
+}
+
+export function RenatoGraphScreen() {
+  return <RenatoScreen step={Phase.RENATO_GRAPH} />;
 }

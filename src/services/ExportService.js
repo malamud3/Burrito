@@ -18,19 +18,56 @@ function triggerDownload(content, filename, mime) {
 }
 
 export function logsToJSON(logs, session) {
+  const sessions = new Map();
+  logs.forEach((entry) => {
+    const sessionId = entry.data?.sessionId;
+    if (!sessionId) return;
+    const metadata = sessions.get(sessionId) || {
+      studentId: entry.data?.studentId || '',
+      sessionId,
+      activityPath: entry.data?.activityPath || '',
+      mode: entry.data?.mode || '',
+    };
+    if (entry.actionType === 'activity_start') {
+      Object.assign(metadata, {
+        studentId: entry.data.studentId,
+        activityPath: entry.data.activityPath,
+        mode: entry.data.mode,
+        allocation: entry.data.method
+          ? {
+            method: entry.data.method,
+            allocationIndex: entry.data.allocationIndex,
+            blockNumber: entry.data.blockNumber,
+            positionInBlock: entry.data.positionInBlock,
+          }
+          : null,
+        startTime: entry.timestamp,
+      });
+    }
+    sessions.set(sessionId, metadata);
+  });
+
   return JSON.stringify(
     {
+      schemaVersion: 2,
       exportedAt: formatTimestamp(),
       session: {
         studentId: session.studentId,
-        group: session.group,
+        sessionId: session.sessionId,
+        activityPath: session.activityPath,
+        mode: session.mode,
         startTime: session.startTime,
-        answers: session.answers,
-        effortRatings: session.effortRatings,
-        detectedDifficulty: session.detectedDifficulty,
-        selectedAnalogTaskId: session.selectedAnalogTask?.id || null,
-        maxHintReached: session.maxHintReached,
+        learningStartedAt: session.learningStartedAt,
+        preAssessmentSubmittedAt: session.preAssessmentSubmittedAt,
+        learningEndedAt: session.learningEndedAt,
+        allocation: session.allocation,
+        preAssessment: session.preAssessment,
+        classicWork: session.classicWork,
+        renatoWork: session.renatoWork,
+        graphWork: session.graphWork,
+        transferAssessment: session.transferAssessment,
       },
+      sessions: Array.from(sessions.values()),
       logs,
     },
     null,
@@ -52,11 +89,11 @@ export function logsToCSV(logs) {
 }
 
 export function downloadJSON(logs, session) {
-  const name = `ct-adapt_${session.studentId || 'session'}_${Date.now()}.json`;
+  const name = `burrito_${session.studentId || 'session'}_${Date.now()}.json`;
   triggerDownload(logsToJSON(logs, session), name, 'application/json');
 }
 
 export function downloadCSV(logs, session) {
-  const name = `ct-adapt_${session.studentId || 'session'}_${Date.now()}.csv`;
+  const name = `burrito_${session.studentId || 'session'}_${Date.now()}.csv`;
   triggerDownload(logsToCSV(logs), name, 'text/csv;charset=utf-8');
 }

@@ -32,6 +32,7 @@ export function usePhaseNavigation() {
       goToReturn: () => goTo(Phase.RETURN),
       goToTransfer: () => goTo(Phase.TRANSFER),
       goToEffort: () => goTo(Phase.EFFORT),
+      goToRenato: () => goTo(Phase.RENATO),
       goToCompletion: () => goTo(Phase.COMPLETION),
       goToDashboard: () => goTo(Phase.DASHBOARD),
     }),

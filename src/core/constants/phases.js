@@ -13,6 +13,7 @@ export const PHASE_CONFIG = {
   [Phase.RETURN]: { label: 'חזרה לבעיה המקורית', progress: 70, icon: '🔁' },
   [Phase.TRANSFER]: { label: 'משימת העברה', progress: 85, icon: '🚀' },
   [Phase.EFFORT]: { label: 'דירוג מאמץ', progress: 93, icon: '📊' },
+  [Phase.RENATO]: { label: 'כלי העזר לחקירת פונקציות', progress: 30, icon: '📈' },
   [Phase.COMPLETION]: { label: 'סיום', progress: 100, icon: '✅' },
   [Phase.DASHBOARD]: { label: 'לוח בקרה', progress: 100, icon: '📋' },
 };

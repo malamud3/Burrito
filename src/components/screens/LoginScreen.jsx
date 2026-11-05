@@ -3,15 +3,16 @@ import { useSessionContext } from '../../context/SessionContext';
 import { useLogContext } from '../../context/LogContext';
 import { useNotification } from '../../context/NotificationContext';
 import { usePhaseNavigation } from '../../hooks/usePhaseNavigation';
-import { Group, Mode } from '../../core/types/enums';
+import { ActivityPath, Group, Mode } from '../../core/types/enums';
 
 export default function LoginScreen() {
   const [studentId, setStudentId] = useState('');
   const [group, setGroup] = useState('');
   const [mode, setMode] = useState(Mode.STUDENT);
+  const [activityPath, setActivityPath] = useState(ActivityPath.CT_ADAPT);
   const { initSession } = useSessionContext();
   const { clearLogs } = useLogContext();
-  const { goToProblem, goToDashboard } = usePhaseNavigation();
+  const { goToProblem, goToDashboard, goToRenato } = usePhaseNavigation();
   const { show } = useNotification();
 
   const handleStart = () => {
@@ -19,9 +20,10 @@ export default function LoginScreen() {
     if (!group) return show('נא לבחור קבוצת מחקר', '⚠️');
 
     clearLogs();
-    initSession(studentId.trim(), group, mode);
+    initSession(studentId.trim(), group, mode, activityPath);
 
     if (mode === Mode.RESEARCHER) goToDashboard();
+    else if (activityPath === ActivityPath.RENATO) goToRenato();
     else goToProblem();
 
     return show('הפגישה החלה. בהצלחה!', '🚀');
@@ -63,6 +65,18 @@ export default function LoginScreen() {
           <select value={mode} onChange={(e) => setMode(e.target.value)}>
             <option value={Mode.STUDENT}>תלמיד/ה</option>
             <option value={Mode.RESEARCHER}>חוקר/ת — לוח בקרה</option>
+          </select>
+        </div>
+
+        <div className="field login-field">
+          <label htmlFor="activity-path">מסלול פעילות</label>
+          <select
+            id="activity-path"
+            value={activityPath}
+            onChange={(e) => setActivityPath(e.target.value)}
+          >
+            <option value={ActivityPath.CT_ADAPT}>מסלול CT-Adapt</option>
+            <option value={ActivityPath.RENATO}>מסלול רנאטו סאיג — חקירת פונקציות</option>
           </select>
         </div>
 

@@ -12,6 +12,7 @@ import { ActivityPath } from '../src/core/types/enums';
 import { vi } from 'vitest';
 
 const click = (name) => fireEvent.click(screen.getByRole('button', { name: new RegExp(name) }));
+const choosePath = (name) => fireEvent.click(screen.getByRole('radio', { name: new RegExp(name) }));
 const typeInto = (element, value) => fireEvent.change(element, { target: { value } });
 const fillPreAssessment = () => {
   [
@@ -168,7 +169,7 @@ test('classic path presents direct math questions and saves comparable responses
 test('researcher mode opens the dashboard without assigning a participant', () => {
   render(<App />);
   typeInto(screen.getByPlaceholderText('הכנס קוד משתתף/ת'), 'R1');
-  typeInto(screen.getByLabelText('מצב'), 'researcher');
+  typeInto(screen.getByLabelText('כניסה בתור'), 'researcher');
   click('לוח בקרה');
 
   expect(screen.getByRole('heading', { name: '📊 לוח בקרה — חוקר/ת' })).toBeInTheDocument();
@@ -209,7 +210,7 @@ test('researcher can score a submitted assessment without seeing participant cod
 
   render(<App />);
   typeInto(screen.getByPlaceholderText('הכנס קוד משתתף/ת'), 'R1');
-  typeInto(screen.getByLabelText('מצב'), 'researcher');
+  typeInto(screen.getByLabelText('כניסה בתור'), 'researcher');
   click('לוח בקרה');
   fireEvent.click(screen.getByRole('tab', { name: 'ניקוד בוחנים' }));
 
@@ -257,7 +258,7 @@ test('researcher can score a submitted assessment without seeing participant cod
 test('students choose a learning path at login and complete the shared pretest first', () => {
   render(<App />);
   typeInto(screen.getByPlaceholderText('הכנס קוד משתתף/ת'), 'PRE01');
-  typeInto(screen.getByLabelText('מסלול למידה'), ActivityPath.RENATO);
+  choosePath('מסלול רנאטו');
   click('התחל/י');
 
   expect(screen.getByRole('heading', { name: 'בוחן מקדים' })).toBeInTheDocument();
@@ -275,7 +276,7 @@ test('students choose a learning path at login and complete the shared pretest f
 test('a student can select a path but cannot skip the shared pretest', () => {
   render(<App />);
   typeInto(screen.getByPlaceholderText('הכנס קוד משתתף/ת'), 'NO-PATH');
-  typeInto(screen.getByLabelText('מסלול למידה'), ActivityPath.RENATO);
+  choosePath('מסלול רנאטו');
   click('התחל/י');
 
   expect(screen.getByRole('heading', { name: 'בוחן מקדים' })).toBeInTheDocument();
@@ -298,7 +299,7 @@ test('starting another participant preserves previous participant logs', () => {
   window.history.replaceState({}, '', '/login');
   fireEvent.popState(window);
   typeInto(screen.getByPlaceholderText('הכנס קוד משתתף/ת'), 'P02');
-  typeInto(screen.getByLabelText('מסלול למידה'), ActivityPath.RENATO);
+  choosePath('מסלול רנאטו');
   click('התחל/י');
   fillPreAssessment();
   click('הגשת הבוחן והתחלת הלמידה');
@@ -403,7 +404,7 @@ test('opening the transfer route directly cannot skip the learning activity', ()
 test('Renato path uses matched open questions, saves a graph, and exports comparable responses', () => {
   const { unmount } = render(<App />);
   typeInto(screen.getByPlaceholderText('הכנס קוד משתתף/ת'), 'R-S01');
-  typeInto(screen.getByLabelText('מסלול למידה'), ActivityPath.RENATO);
+  choosePath('מסלול רנאטו');
   click('התחל/י');
   fillPreAssessment();
   click('הגשת הבוחן והתחלת הלמידה');

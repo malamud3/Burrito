@@ -54,7 +54,7 @@ export default function LoginScreen() {
   };
 
   return (
-    <main className="container-wide learning-screen login-screen">
+    <main className="container-wide learning-screen login-screen" dir="rtl">
       <div className="login-layout">
         <section className="login-story" aria-labelledby="login-story-title">
           <div className="login-story-brand">
@@ -103,11 +103,12 @@ export default function LoginScreen() {
             הזינו קוד ובחרו מסלול למידה. לאחר הבוחן המקדים תתחיל הפעילות במסלול שבחרתם.
           </p>
 
-          <div className="field login-field">
+          <div className="field login-field login-id-field">
             <label htmlFor="student-id">קוד תלמיד/ה</label>
             <input
               id="student-id"
               type="text"
+              dir="auto"
               value={studentId}
               onChange={(e) => setStudentId(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleStart()}
@@ -115,40 +116,57 @@ export default function LoginScreen() {
             />
           </div>
 
-          <div className="field login-field">
-            <label htmlFor="mode">מצב</label>
+          {mode === Mode.STUDENT && !AUTO_ASSIGN_STUDY_PATH && (
+            <fieldset className="login-path-picker">
+              <legend>בחרו מסלול למידה</legend>
+              <label className="login-path-option">
+                <input
+                  type="radio"
+                  name="activity-path"
+                  value={ActivityPath.CLASSIC}
+                  checked={activityPath === ActivityPath.CLASSIC}
+                  onChange={(event) => setActivityPath(event.target.value)}
+                />
+                <span>
+                  <strong>מסלול קלאסי</strong>
+                  <span>חקירה מתמטית, צעד אחר צעד</span>
+                </span>
+              </label>
+              <label className="login-path-option">
+                <input
+                  type="radio"
+                  name="activity-path"
+                  value={ActivityPath.RENATO}
+                  checked={activityPath === ActivityPath.RENATO}
+                  onChange={(event) => setActivityPath(event.target.value)}
+                />
+                <span>
+                  <strong>מסלול רנאטו</strong>
+                  <span>כלים לארגון ולפירוק החקירה</span>
+                </span>
+              </label>
+            </fieldset>
+          )}
+
+          <div className="field login-field login-mode-field">
+            <label htmlFor="mode">כניסה בתור</label>
             <select id="mode" value={mode} onChange={(e) => setMode(e.target.value)}>
               <option value={Mode.STUDENT}>תלמיד/ה</option>
               <option value={Mode.RESEARCHER}>חוקר/ת — לוח בקרה</option>
             </select>
           </div>
 
-          {mode === Mode.STUDENT && !AUTO_ASSIGN_STUDY_PATH && (
-            <div className="field login-field">
-              <label htmlFor="activity-path">מסלול למידה</label>
-              <select
-                id="activity-path"
-                value={activityPath}
-                onChange={(event) => setActivityPath(event.target.value)}
-              >
-                <option value={ActivityPath.CLASSIC}>מסלול קלאסי</option>
-                <option value={ActivityPath.RENATO}>מסלול רנאטו</option>
-              </select>
-            </div>
-          )}
-
           {mode === Mode.STUDENT && (
-            <div className="login-research-notice" role="note">
-              <strong>מהלך ההדגמה</strong>
+            <aside className="login-research-notice" role="note">
+              <strong>איך זה עובד?</strong>
               <span>
-                תחילה יוגש בוחן מקדים. אחריו יתחיל
-                טיימר למידה של {STUDY_DURATION_MINUTES} דקות.
+                מתחילים בבוחן מקדים, ממשיכים למסלול שבחרתם למשך {STUDY_DURATION_MINUTES} דקות,
+                ומסיימים בבוחן העברה.
               </span>
               <span>
-                הדגמה בלבד: ההקצאה נשמרת בדפדפן הזה ואינה מתואמת בין מכשירים.
-                אין להשתמש בה לאיסוף נתוני מחקר.
+                זו הדגמה מקומית בלבד. הנתונים נשמרים בדפדפן ואינם מתואמים בין מכשירים.
               </span>
-            </div>
+            </aside>
           )}
 
           <div className="btn-group login-actions">

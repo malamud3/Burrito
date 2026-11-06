@@ -9,6 +9,7 @@ import { ActivityPath, Phase, Mode, LogActionType } from '../core/types/enums';
 import { STUDY_DURATION_SECONDS } from '../core/constants/study';
 import { PHASE_PATHS } from '../core/constants/routes';
 import AppHeader from '../components/layout/AppHeader';
+import AppErrorBoundary from '../components/system/AppErrorBoundary';
 import { SCREEN_REGISTRY } from './screenRegistry';
 
 const CLASSIC_PHASES = new Set([
@@ -95,7 +96,7 @@ function PhaseRoute({ phase, Screen }) {
   return <Screen />;
 }
 
-function AppShell() {
+function LearningTimeoutController() {
   const { session, endLearning } = useSessionContext();
   const { currentPhase } = usePhaseContext();
   const { logs, addLog } = useLogContext();
@@ -115,10 +116,6 @@ function AppShell() {
     return () => clearInterval(timerId);
   }, [instructionIsActive]);
 
-  const elapsedSeconds = session.learningStartedAt
-    ? Math.max(0, Math.floor(((session.learningEndedAt || now) - session.learningStartedAt) / 1000))
-    : 0;
-  const secondsRemaining = Math.max(0, STUDY_DURATION_SECONDS - elapsedSeconds);
   const studyTimeExpired =
     session.isActive &&
     session.mode === Mode.STUDENT &&
@@ -171,13 +168,21 @@ function AppShell() {
     goToTransferAssessment,
   ]);
 
+  return null;
+}
+
+function AppShell() {
+  const { session } = useSessionContext();
+  const { currentPhase } = usePhaseContext();
+
   const rootPath = session.isActive
     ? PHASE_PATHS[currentPhase] || PHASE_PATHS[Phase.LOGIN]
     : PHASE_PATHS[Phase.LOGIN];
 
   return (
     <div className="app-shell">
-      <AppHeader seconds={secondsRemaining} />
+      <LearningTimeoutController />
+      <AppHeader />
       <Routes>
         {Object.entries(SCREEN_REGISTRY).map(([phase, Screen]) => (
           <Route
@@ -196,8 +201,10 @@ function AppShell() {
 
 export default function App() {
   return (
-    <AppProviders>
-      <AppShell />
-    </AppProviders>
+    <AppErrorBoundary>
+      <AppProviders>
+        <AppShell />
+      </AppProviders>
+    </AppErrorBoundary>
   );
 }

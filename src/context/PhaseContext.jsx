@@ -94,10 +94,14 @@ export function PhaseProvider({ children }) {
   useEffect(() => {
     if (typeof window === 'undefined' || !window.localStorage) return;
 
-    if (session.isActive) {
-      window.localStorage.setItem(PHASE_STORAGE_KEY, currentPhase);
-    } else {
-      window.localStorage.removeItem(PHASE_STORAGE_KEY);
+    try {
+      if (session.isActive) {
+        window.localStorage.setItem(PHASE_STORAGE_KEY, currentPhase);
+      } else {
+        window.localStorage.removeItem(PHASE_STORAGE_KEY);
+      }
+    } catch (error) {
+      console.warn('Failed to persist phase to localStorage', error);
     }
   }, [currentPhase, session.isActive]);
 

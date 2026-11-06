@@ -26,10 +26,16 @@ export function loadSession(storage = getBrowserStorage()) {
 export function saveSession(state, storage = getBrowserStorage()) {
   if (!storage) return;
 
-  if (hasMeaningfulSessionData(state)) {
-    storage.setItem(SESSION_STORAGE_KEY, JSON.stringify(state));
-  } else {
-    storage.removeItem(SESSION_STORAGE_KEY);
+  try {
+    if (hasMeaningfulSessionData(state)) {
+      storage.setItem(SESSION_STORAGE_KEY, JSON.stringify(state));
+    } else {
+      storage.removeItem(SESSION_STORAGE_KEY);
+    }
+  } catch (error) {
+    // Persistence is a convenience for this local demo; it must not crash
+    // the app when the browser denies writes or the quota is exhausted.
+    console.warn('Failed to persist session to localStorage', error);
   }
 }
 

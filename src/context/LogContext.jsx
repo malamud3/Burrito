@@ -34,16 +34,22 @@ const readStoredLogs = () => {
 };
 
 export function LogProvider({ children }) {
-  const [logs, setLogs] = useState(readStoredLogs);
-  const logsRef = useRef(readStoredLogs());
+  const [logs, setLogs] = useState(() => readStoredLogs());
+  const logsRef = useRef(logs);
 
   useEffect(() => {
     if (typeof window === 'undefined' || !window.localStorage) return;
 
-    if (logs.length > 0) {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(logs));
-    } else {
-      window.localStorage.removeItem(STORAGE_KEY);
+    try {
+      if (logs.length > 0) {
+        window.localStorage.setItem(STORAGE_KEY, JSON.stringify(logs));
+      } else {
+        window.localStorage.removeItem(STORAGE_KEY);
+      }
+    } catch (error) {
+      // Storage can be unavailable or full (for example in private browsing).
+      // Logging must never take down the learning flow in that case.
+      console.warn('Failed to persist logs to localStorage', error);
     }
   }, [logs]);
 
@@ -67,7 +73,11 @@ export function LogProvider({ children }) {
     logsRef.current = [];
     setLogs([]);
     if (typeof window !== 'undefined' && window.localStorage) {
-      window.localStorage.removeItem(STORAGE_KEY);
+      try {
+        window.localStorage.removeItem(STORAGE_KEY);
+      } catch (error) {
+        console.warn('Failed to clear logs from localStorage', error);
+      }
     }
   }, []);
 

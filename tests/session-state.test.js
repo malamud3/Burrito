@@ -98,6 +98,23 @@ test('session storage restores defaults when persisted JSON is malformed', () =>
   warning.mockRestore();
 });
 
+test('session persistence failures do not crash the application', () => {
+  const storage = {
+    setItem: () => { throw new Error('quota exceeded'); },
+    removeItem: () => {},
+  };
+  const warning = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+  expect(() => saveSession({ ...createInitialSessionState(), studentId: 'S-03' }, storage))
+    .not.toThrow();
+  expect(warning).toHaveBeenCalledWith(
+    'Failed to persist session to localStorage',
+    expect.any(Error),
+  );
+
+  warning.mockRestore();
+});
+
 test('session meaningful-data policy recognizes active and previously used sessions', () => {
   const initial = createInitialSessionState();
 

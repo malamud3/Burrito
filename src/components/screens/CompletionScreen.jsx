@@ -6,7 +6,7 @@ import { useLogExport } from '../../hooks/useLogExport';
 import { computeSessionSummary } from '../../services/LogAnalyticsService';
 import { formatTime } from '../../core/utils/timeFormatter';
 import { ActivityPath } from '../../core/types/enums';
-import ProgressBar from '../layout/ProgressBar';
+import CompletionView from '../completion/CompletionView';
 
 export default function CompletionScreen() {
   const { session } = useSessionContext();
@@ -29,38 +29,10 @@ export default function CompletionScreen() {
   ];
 
   return (
-    <div className="container learning-screen completion-screen">
-      <ProgressBar />
-      <div
-        className="card"
-        style={{ maxWidth: 600, margin: '6vh auto 0', textAlign: 'center', padding: 48 }}
-      >
-        <div className="completion-icon">🎉</div>
-        <h2>סיימת! תודה רבה!</h2>
-        <p style={{ margin: '16px 0', color: 'var(--text2)' }}>
-          כל הנתונים נשמרו בהצלחה.
-          <br />
-          הפעילות הושלמה.
-        </p>
-
-        <ul className="summary-list" style={{ textAlign: 'right', marginTop: 24 }}>
-          {rows.map(([label, value]) => (
-            <li key={label}>
-              <span>{label}</span>
-              <strong>{value}</strong>
-            </li>
-          ))}
-        </ul>
-
-        <div className="btn-group" style={{ justifyContent: 'center', marginTop: 24 }}>
-          <button className="btn btn-outline" onClick={goToDashboard}>
-            📊 צפייה בנתונים (חוקר/ת)
-          </button>
-          <button className="btn btn-outline" onClick={exportJSON}>
-            ⬇️ הורדת לוגים
-          </button>
-        </div>
-      </div>
-    </div>
+    <CompletionView
+      rows={rows}
+      onDashboard={goToDashboard}
+      onExport={exportJSON}
+    />
   );
 }

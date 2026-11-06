@@ -2212,3 +2212,60 @@ label { margin-bottom: 7px; color: #494840; font-size: 0.9rem; font-weight: 600;
 .log-load-more {
   margin-bottom: 12px;
 }
+
+/* Screen composition helpers: keep screen components markup-free and styles centralized. */
+.screen-actions-centered { justify-content: center; }
+
+.learning-screen .completion-card {
+    max-width: 600px;
+    margin: 6vh auto 0;
+    padding: 48px;
+    text-align: center;
+}
+.completion-message {
+    margin: 16px 0;
+    color: var(--text2);
+}
+.completion-summary {
+    margin-top: 24px;
+    text-align: right;
+}
+.completion-actions { margin-top: 24px; }
+
+.learning-screen .difficulty-card {
+    padding: 40px;
+    text-align: center;
+}
+.difficulty-icon {
+    margin-bottom: 16px;
+    font-size: 3rem;
+}
+.difficulty-message {
+    margin: 16px 0;
+    color: var(--text2);
+    font-size: 1.05rem;
+}
+.difficulty-supporting-text { color: var(--text2); }
+.difficulty-actions { margin-top: 24px; }
+
+.learning-screen .effort-intro-card,
+.learning-screen .transfer-intro-card,
+.learning-screen .return-intro-card {
+    padding: 24px;
+    text-align: center;
+}
+.learning-screen .effort-intro-card p,
+.learning-screen .transfer-intro-card p { color: var(--text2); }
+.effort-actions { margin-top: 20px; }
+
+.return-previous-answer {
+    margin-top: 8px;
+    padding: 16px;
+    border-radius: var(--radius-sm);
+    background: var(--surface3);
+    color: var(--text2);
+    font-style: italic;
+    white-space: pre-line;
+}
+
+.dashboard-timeline-title { margin-bottom: 12px; }

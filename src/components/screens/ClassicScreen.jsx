@@ -11,12 +11,8 @@ import {
   FUNCTION_STUDY_STEPS,
 } from '../../core/constants/functionStudy';
 import { useNotification } from '../../context/NotificationContext';
-import FunctionFraction from '../math/FunctionFraction';
-import FunctionGraph from '../math/FunctionGraph';
-import FunctionStudyStep, {
-  FunctionStudyNavigation,
-  getStepStatus,
-} from './FunctionStudyStep';
+import { getStepStatus } from './FunctionStudyStep';
+import ClassicLearningView from '../classic/ClassicLearningView';
 
 const CLASSIC_LEARNING_PHASES = [
   Phase.CLASSIC,
@@ -127,74 +123,30 @@ export default function ClassicScreen({ phase = Phase.CLASSIC } = {}) {
     : null;
 
   return (
-    <div className="container-wide learning-screen renato-screen classic-screen" dir="rtl">
-      <header className="renato-title">
-        <span className="renato-eyebrow">מסלול קלאסי</span>
-        <h1>חקירת פונקציה</h1>
-      </header>
-      <p className="study-protocol-note">
-        לרשותכם {STUDY_DURATION_MINUTES} דקות, דף טיוטה וכלי שרטוט דיגיטלי זהה לזה שבמסלול רנאטו.
-        ניתן לבקש מהמנחה הבהרה טכנית בלבד, ללא רמזים מתמטיים.
-      </p>
-
-      <section className="renato-function" aria-label="הפונקציה הנחקרת">
-        <span className="renato-function-label">הפונקציה הנחקרת</span>
-        <FunctionFraction
-          numerator="x²"
-          denominator="x² − 4x + 3"
-          ariaLabel={`f(x) = ${RENATO_FUNCTION}`}
-          className="renato-function-expression"
-        />
-      </section>
-
-      <FunctionStudyNavigation
-        steps={FUNCTION_STUDY_STEPS}
-        currentStep={currentStep}
-        statuses={stepStatuses}
-        onSelect={navigateStep}
-      />
-
-      <section className="renato-single-step" aria-label={step.title}>
-        <p className="renato-cards-intro">
-          אפשר לפתור לבד, לפתוח רמז לפי הצורך, ולהמשיך בכל שלב גם אם התשובה עדיין לא הושלמה.
-        </p>
-        <FunctionStudyStep
-          id={step.id}
-          title={step.title}
-          fields={fields}
-          hints={step.hintKey ? STUDY_HINTS[step.hintKey] : null}
-          processTask={processTask}
-          onHintReveal={(hintIndex) => log(LogActionType.HINT_REQUEST, {
-            phase: 'function_analysis',
-            stepId: step.id,
-            hintIndex,
-            totalHints: STUDY_HINTS[step.hintKey].length,
-          })}
-        />
-        {step.graph && (
-          <section className="card" aria-label="שרטוט משותף לשני המסלולים">
-            <FunctionGraph work={graphWork} onUpdate={handleGraphUpdate} />
-          </section>
-        )}
-      </section>
-
-      <div className="renato-step-actions">
-        {previousStep !== null ? (
-          <button className="btn btn-outline" onClick={() => navigateStep(previousStep)}>
-            ← חזרה
-          </button>
-        ) : <span />}
-        {nextStep !== null ? (
-          <button className="btn btn-primary" onClick={() => navigateStep(nextStep)}>
-            המשך/י לשלב הבא ←
-          </button>
-        ) : (
-          <button className="btn btn-primary" onClick={handleFinish}>
-            סיימתי את חקירת הפונקציה
-          </button>
-        )}
-      </div>
-    </div>
+    <ClassicLearningView
+      studyDurationMinutes={STUDY_DURATION_MINUTES}
+      renatoFunction={RENATO_FUNCTION}
+      steps={FUNCTION_STUDY_STEPS}
+      currentStep={currentStep}
+      statuses={stepStatuses}
+      step={step}
+      fields={fields}
+      hints={step.hintKey ? STUDY_HINTS[step.hintKey] : null}
+      processTask={processTask}
+      graphWork={graphWork}
+      previousStep={previousStep}
+      nextStep={nextStep}
+      onSelectStep={navigateStep}
+      onGraphUpdate={handleGraphUpdate}
+      onHintReveal={(hintIndex) => log(LogActionType.HINT_REQUEST, {
+        phase: 'function_analysis',
+        stepId: step.id,
+        hintIndex,
+        totalHints: STUDY_HINTS[step.hintKey].length,
+      })}
+      onNavigateStep={navigateStep}
+      onFinish={handleFinish}
+    />
   );
 }
 

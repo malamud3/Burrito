@@ -4,6 +4,10 @@ import { useNotification } from '../../context/NotificationContext';
 import { usePhaseNavigation } from '../../hooks/usePhaseNavigation';
 import EffortScale from '../effort/EffortScale';
 import ProgressBar from '../layout/ProgressBar';
+import LearningScreen from '../layout/LearningScreen';
+import ScreenActions from '../layout/ScreenActions';
+import ActionButton from '../ui/ActionButton';
+import EffortIntroCard from '../effort/EffortIntroCard';
 
 export default function EffortScreen() {
   const { session } = useSessionContext();
@@ -25,15 +29,9 @@ export default function EffortScreen() {
   }, [allComplete, goToCompletion, show]);
 
   return (
-    <div className="container learning-screen effort-screen">
+    <LearningScreen className="effort-screen">
       <ProgressBar />
-
-      <div className="card" style={{ textAlign: 'center', padding: 24 }}>
-        <h2>📊 דירוג מאמץ מנטלי</h2>
-        <p style={{ color: 'var(--text2)' }}>
-          דרג/י את המאמץ שנדרש ממך בכל אחת מהמשימות (סולם Paas, 1–9).
-        </p>
-      </div>
+      <EffortIntroCard />
 
       <EffortScale taskKey="main" title="הבעיה המקורית" />
       {needsAnalogRating && (
@@ -41,15 +39,15 @@ export default function EffortScreen() {
       )}
       <EffortScale taskKey="transfer" title="משימת ההעברה" />
 
-      <div className="btn-group" style={{ justifyContent: 'center', marginTop: 20 }}>
-        <button
-          className="btn btn-success"
+      <ScreenActions centered className="effort-actions">
+        <ActionButton
+          tone="success"
           onClick={handleComplete}
           disabled={!allComplete}
         >
           סיום ←
-        </button>
-      </div>
-    </div>
+        </ActionButton>
+      </ScreenActions>
+    </LearningScreen>
   );
 }

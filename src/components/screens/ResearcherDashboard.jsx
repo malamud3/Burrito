@@ -7,13 +7,7 @@ import { LogActionType } from '../../core/types/enums';
 import { PHASE_STORAGE_KEY } from '../../context/PhaseContext';
 import { SESSION_STORAGE_KEY } from '../../services/SessionStorage';
 import { formatTime } from '../../core/utils/timeFormatter';
-import StatCard from '../researcher/StatCard';
-import LogPanel from '../researcher/LogPanel';
-import StudentTimeline from '../researcher/StudentTimeline';
-import AssessmentScoringPanel from '../researcher/AssessmentScoringPanel';
-import ActionButton from '../ui/ActionButton';
-import AppBadge from '../ui/AppBadge';
-import SegmentedTabs from '../ui/SegmentedTabs';
+import ResearcherDashboardView from '../researcher/ResearcherDashboardView';
 
 const TABS = [
   { id: 'log', label: 'לוג מלא' },
@@ -54,53 +48,17 @@ export default function ResearcherDashboard() {
   ];
 
   return (
-    <div className="container-wide learning-screen dashboard-screen">
-      <div className="app-header">
-        <h1>📊 לוח בקרה — חוקר/ת</h1>
-        <div className="header-info">
-          <AppBadge>{session.studentId}</AppBadge>
-          <ActionButton tone="outline" size="small" onClick={exportJSON}>
-            ⬇️ הורד לוגים
-          </ActionButton>
-          <ActionButton tone="outline" size="small" onClick={exportCSV}>
-            ⬇️ הורד CSV
-          </ActionButton>
-          <ActionButton tone="outline" size="small" onClick={exportAssessmentScoresCSV}>
-            ⬇️ הורד ציוני בוחנים
-          </ActionButton>
-          <ActionButton tone="outline" size="small" onClick={handleReload}>
-            ↺ משתתף/ת חדש/ה
-          </ActionButton>
-        </div>
-      </div>
-
-      <div className="dashboard-grid">
-        {stats.map((s) => (
-          <StatCard key={s.label} value={s.value} label={s.label} />
-        ))}
-      </div>
-      <p className="study-protocol-note">
-        הנתונים וההקצאות נשמרים בדפדפן זה. ייצאו גיבוי לפני ניקוי נתוני הדפדפן;
-        כל סשני המשתתפים נשמרים יחד בלוגים.
-      </p>
-
-      <SegmentedTabs
-        tabs={TABS}
-        value={activeTab}
-        onChange={setActiveTab}
-        aria-label="לשוניות לוח הבקרה"
-      />
-
-      <div className="card">
-        {activeTab === 'log' && <LogPanel logs={logs} />}
-        {activeTab === 'timeline' && (
-          <>
-            <h3 style={{ marginBottom: 12 }}>ציר זמן — משך זמן בכל שלב</h3>
-            <StudentTimeline logs={logs} />
-          </>
-        )}
-        {activeTab === 'scoring' && <AssessmentScoringPanel logs={logs} />}
-      </div>
-    </div>
+    <ResearcherDashboardView
+      studentId={session.studentId}
+      stats={stats}
+      logs={logs}
+      activeTab={activeTab}
+      tabs={TABS}
+      onTabChange={setActiveTab}
+      onExportJSON={exportJSON}
+      onExportCSV={exportCSV}
+      onExportAssessmentScores={exportAssessmentScoresCSV}
+      onReload={handleReload}
+    />
   );
 }

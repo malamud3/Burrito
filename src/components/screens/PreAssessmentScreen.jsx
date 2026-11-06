@@ -14,8 +14,7 @@ import {
   assignChosenStudyPath,
   assignDemoStudyPath,
 } from '../../services/StudyAllocationService';
-import ProgressBar from '../layout/ProgressBar';
-import FunctionFraction from '../math/FunctionFraction';
+import FunctionAssessmentView from '../assessment/FunctionAssessmentView';
 
 export default function PreAssessmentScreen() {
   const {
@@ -103,47 +102,19 @@ export default function PreAssessmentScreen() {
   };
 
   return (
-    <div className="container-wide learning-screen transfer-assessment-screen" dir="rtl">
-      <ProgressBar />
-      <header className="renato-title">
-        <span className="renato-eyebrow">מדידת ידע לפני הפעילות</span>
-        <h1>בוחן מקדים</h1>
-      </header>
-      <section className="card">
-        <p>
-          ענו באופן עצמאי, לפני תחילת מסלול הלמידה. אין להשתמש ברמזים או בכלי
-          העזר. התשובות נשמרות גם אם הפעילות מופסקת.
-        </p>
-        <div className="renato-function" aria-label="פונקציית הבוחן המקדים">
-          <span className="renato-function-label">הפונקציה לבחינה</span>
-          <FunctionFraction
-            numerator={PRE_ASSESSMENT_FUNCTION.numerator}
-            denominator={PRE_ASSESSMENT_FUNCTION.denominator}
-            ariaLabel={`${PRE_ASSESSMENT_FUNCTION.name} = ${PRE_ASSESSMENT_FUNCTION.expression}`}
-            functionName={PRE_ASSESSMENT_FUNCTION.name}
-            className="renato-function-expression"
-          />
-        </div>
-      </section>
-      <section className="card" aria-label="שאלות הבוחן המקדים">
-        {FUNCTION_ASSESSMENT_QUESTIONS.map(({ key, label, rows }) => (
-          <div className="field" key={key}>
-            <label htmlFor={`pre-${key}`}>{label}</label>
-            <textarea
-              id={`pre-${key}`}
-              rows={rows}
-              dir="auto"
-              value={answers[key]}
-              onChange={(event) => handleChange(key, event.target.value)}
-            />
-          </div>
-        ))}
-        <div className="btn-group" style={{ justifyContent: 'center' }}>
-          <button className="btn btn-primary" onClick={handleSubmit}>
-            הגשת הבוחן והתחלת הלמידה
-          </button>
-        </div>
-      </section>
-    </div>
+    <FunctionAssessmentView
+      eyebrow="מדידת ידע לפני הפעילות"
+      title="בוחן מקדים"
+      description="ענו באופן עצמאי, לפני תחילת מסלול הלמידה. אין להשתמש ברמזים או בכלי העזר. התשובות נשמרות גם אם הפעילות מופסקת."
+      assessmentFunction={PRE_ASSESSMENT_FUNCTION}
+      functionAriaLabel="פונקציית הבוחן המקדים"
+      questions={FUNCTION_ASSESSMENT_QUESTIONS}
+      answers={answers}
+      idPrefix="pre"
+      questionsAriaLabel="שאלות הבוחן המקדים"
+      onChange={handleChange}
+      onSubmit={handleSubmit}
+      submitLabel="הגשת הבוחן והתחלת הלמידה"
+    />
   );
 }

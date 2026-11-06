@@ -13,6 +13,8 @@ import AlgorithmTool from '../ct-tools/AlgorithmTool';
 import ProblemReminder from '../problem/ProblemReminder';
 import AnswerBox from '../problem/AnswerBox';
 import ProgressBar from '../layout/ProgressBar';
+import LearningScreen from '../layout/LearningScreen';
+import SolvingActions from '../solving/SolvingActions';
 import { CTSkill } from '../../core/types/enums';
 
 export default function SolvingScreen() {
@@ -66,27 +68,17 @@ export default function SolvingScreen() {
   }, [log, forceDetection, delayedGoToDifficulty, show]);
 
   return (
-    <div className="container learning-screen solving-screen">
+    <LearningScreen className="solving-screen">
       <ProgressBar />
-
       <ProblemReminder
         problemText={`${MAIN_PROBLEM.text}\n\n${MAIN_PROBLEM.question}`}
       />
-
       <DecompositionTool status={statuses[CTSkill.DECOMPOSITION]} />
       <AbstractionTool status={statuses[CTSkill.ABSTRACTION]} />
       <AlgorithmTool status={statuses[CTSkill.ALGORITHMIC]} />
-
       <AnswerBox value={session.answers.main} onChange={handleAnswerChange}>
-        <div className="btn-group">
-          <button className="btn btn-primary" onClick={handleSubmit}>
-            שלח/י תשובה
-          </button>
-          <button className="btn btn-outline" onClick={handleHelpRequest}>
-            💡 אני צריך/ה עזרה
-          </button>
-        </div>
+        <SolvingActions onSubmit={handleSubmit} onHelp={handleHelpRequest} />
       </AnswerBox>
-    </div>
+    </LearningScreen>
   );
 }

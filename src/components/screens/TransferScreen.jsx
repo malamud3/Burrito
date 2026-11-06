@@ -8,6 +8,11 @@ import { TRANSFER_PROBLEM } from '../../core/constants/problems';
 import ProblemBox from '../problem/ProblemBox';
 import AnswerBox from '../problem/AnswerBox';
 import ProgressBar from '../layout/ProgressBar';
+import LearningScreen from '../layout/LearningScreen';
+import ScreenActions from '../layout/ScreenActions';
+import ActionButton from '../ui/ActionButton';
+import TransferIntroCard from '../transfer/TransferIntroCard';
+import TransferToolList from '../transfer/TransferToolList';
 
 const SUB_TOOLS = [
   { key: 'transferDecomp', title: '🧩 פירוק הבעיה', rows: 3, placeholder: 'שלב 1: ... שלב 2: ...' },
@@ -37,41 +42,19 @@ export default function TransferScreen() {
   }, [session.answers, log, goToEffort, show]);
 
   return (
-    <div className="container learning-screen transfer-screen">
+    <LearningScreen className="transfer-screen">
       <ProgressBar />
-
-      <div className="card" style={{ textAlign: 'center', padding: 24 }}>
-        <h2>🚀 משימה חדשה</h2>
-        <p style={{ color: 'var(--text2)' }}>
-          הבעיה הבאה היא בעיה חדשה. נסה/י לפתור אותה באופן עצמאי, תוך שימוש בכל
-          מה שלמדת.
-        </p>
-      </div>
-
+      <TransferIntroCard />
       <ProblemBox
         label={TRANSFER_PROBLEM.label}
         text={TRANSFER_PROBLEM.text}
         question={TRANSFER_PROBLEM.question}
       />
-
-      {SUB_TOOLS.map(({ key, title, rows, placeholder }) => (
-        <div className="ct-tool" key={key}>
-          <div className="ct-tool-header">
-            <div className="ct-tool-title">
-              <span>{title}</span>
-            </div>
-          </div>
-          <div className="field">
-            <textarea
-              value={session.answers[key]}
-              onChange={(e) => setAnswer(key, e.target.value)}
-              rows={rows}
-              placeholder={placeholder}
-            />
-          </div>
-        </div>
-      ))}
-
+      <TransferToolList
+        tools={SUB_TOOLS}
+        answers={session.answers}
+        onChange={setAnswer}
+      />
       <AnswerBox
         title="✍️ הפתרון המלא"
         fieldLabel="הפתרון המלא"
@@ -79,12 +62,12 @@ export default function TransferScreen() {
         onChange={(v) => setAnswer('transfer', v)}
         placeholder="כתוב/י את הפתרון המלא..."
       >
-        <div className="btn-group" style={{ justifyContent: 'center' }}>
-          <button className="btn btn-primary" onClick={handleSubmit}>
+        <ScreenActions centered>
+          <ActionButton onClick={handleSubmit}>
             שלח/י ועבור/י לדירוג מאמץ
-          </button>
-        </div>
+          </ActionButton>
+        </ScreenActions>
       </AnswerBox>
-    </div>
+    </LearningScreen>
   );
 }

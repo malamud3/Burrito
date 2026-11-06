@@ -9,6 +9,7 @@ import {
   STUDY_DURATION_MINUTES,
 } from '../../core/constants/study';
 import { isParticipantAlreadyAssigned } from '../../services/StudyAllocationService';
+import LoginView from '../login/LoginView';
 
 export default function LoginScreen() {
   const [studentId, setStudentId] = useState('');
@@ -54,128 +55,16 @@ export default function LoginScreen() {
   };
 
   return (
-    <main className="container-wide learning-screen login-screen" dir="rtl">
-      <div className="login-layout">
-        <section className="login-story" aria-labelledby="login-story-title">
-          <div className="login-story-brand">
-            <span className="login-mark" aria-hidden="true">B</span>
-            <span>Burrito</span>
-          </div>
-          <p className="login-story-kicker">מרחב ללמידה מתמטית</p>
-          <h1 id="login-story-title">
-            חוקרים פונקציות.
-            <br />
-            <span>מגלים את הדרך.</span>
-          </h1>
-          <p className="login-story-description">
-            סביבת למידה ממוקדת לחקירת פונקציות, עם שתי דרכים שונות לארגון החקירה
-            וכלים שעוזרים להפוך כל שלב להבנה.
-          </p>
-          <div className="login-feature-grid" aria-label="מה מחכה לך במרחב">
-            <div className="login-feature">
-              <span>01</span>
-              <strong>מקבלים מסלול</strong>
-              <small>בחירה בין שני מסלולים</small>
-            </div>
-            <div className="login-feature">
-              <span>02</span>
-              <strong>חוקרים לעומק</strong>
-              <small>מתקדמים צעד אחר צעד</small>
-            </div>
-            <div className="login-feature">
-              <span>03</span>
-              <strong>מסכמים ומשרטטים</strong>
-              <small>מחברים בין הרעיונות</small>
-            </div>
-          </div>
-          <p className="login-session-note">
-            <span aria-hidden="true" />
-            מפגש למידה של {STUDY_DURATION_MINUTES} דקות, עם כלי שרטוט דיגיטלי
-          </p>
-        </section>
-
-        <section className="card login-card" aria-labelledby="login-form-title">
-          <div className="login-card-heading">
-            <span className="login-form-eyebrow">הכניסה למרחב שלך</span>
-            <h2 id="login-form-title">מתחילים כאן</h2>
-          </div>
-          <p className="login-subtitle">
-            הזינו קוד ובחרו מסלול למידה. לאחר הבוחן המקדים תתחיל הפעילות במסלול שבחרתם.
-          </p>
-
-          <div className="field login-field login-id-field">
-            <label htmlFor="student-id">קוד תלמיד/ה</label>
-            <input
-              id="student-id"
-              type="text"
-              dir="auto"
-              value={studentId}
-              onChange={(e) => setStudentId(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleStart()}
-              placeholder="הכנס קוד משתתף/ת"
-            />
-          </div>
-
-          {mode === Mode.STUDENT && !AUTO_ASSIGN_STUDY_PATH && (
-            <fieldset className="login-path-picker">
-              <legend>בחרו מסלול למידה</legend>
-              <label className="login-path-option">
-                <input
-                  type="radio"
-                  name="activity-path"
-                  value={ActivityPath.CLASSIC}
-                  checked={activityPath === ActivityPath.CLASSIC}
-                  onChange={(event) => setActivityPath(event.target.value)}
-                />
-                <span>
-                  <strong>מסלול קלאסי</strong>
-                  <span>חקירה מתמטית, צעד אחר צעד</span>
-                </span>
-              </label>
-              <label className="login-path-option">
-                <input
-                  type="radio"
-                  name="activity-path"
-                  value={ActivityPath.RENATO}
-                  checked={activityPath === ActivityPath.RENATO}
-                  onChange={(event) => setActivityPath(event.target.value)}
-                />
-                <span>
-                  <strong>מסלול רנאטו</strong>
-                  <span>כלים לארגון ולפירוק החקירה</span>
-                </span>
-              </label>
-            </fieldset>
-          )}
-
-          <div className="field login-field login-mode-field">
-            <label htmlFor="mode">כניסה בתור</label>
-            <select id="mode" value={mode} onChange={(e) => setMode(e.target.value)}>
-              <option value={Mode.STUDENT}>תלמיד/ה</option>
-              <option value={Mode.RESEARCHER}>חוקר/ת — לוח בקרה</option>
-            </select>
-          </div>
-
-          {mode === Mode.STUDENT && (
-            <aside className="login-research-notice" role="note">
-              <strong>איך זה עובד?</strong>
-              <span>
-                מתחילים בבוחן מקדים, ממשיכים למסלול שבחרתם למשך {STUDY_DURATION_MINUTES} דקות,
-                ומסיימים בבוחן העברה.
-              </span>
-              <span>
-                זו הדגמה מקומית בלבד. הנתונים נשמרים בדפדפן ואינם מתואמים בין מכשירים.
-              </span>
-            </aside>
-          )}
-
-          <div className="btn-group login-actions">
-            <button className="btn btn-primary" onClick={handleStart}>
-              {mode === Mode.STUDENT ? 'התחל/י בוחן מקדים' : 'פתח/י לוח בקרה'}
-            </button>
-          </div>
-        </section>
-      </div>
-    </main>
+    <LoginView
+      durationMinutes={STUDY_DURATION_MINUTES}
+      studentId={studentId}
+      mode={mode}
+      activityPath={activityPath}
+      showPathPicker={mode === Mode.STUDENT && !AUTO_ASSIGN_STUDY_PATH}
+      onStudentIdChange={setStudentId}
+      onModeChange={setMode}
+      onActivityPathChange={setActivityPath}
+      onStart={handleStart}
+    />
   );
 }

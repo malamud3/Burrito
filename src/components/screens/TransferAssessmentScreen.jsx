@@ -5,9 +5,8 @@ import { useNotification } from '../../context/NotificationContext';
 import { usePhaseNavigation } from '../../hooks/usePhaseNavigation';
 import { useLogger } from '../../hooks/useLogger';
 import { LogActionType } from '../../core/types/enums';
-import ProgressBar from '../layout/ProgressBar';
-import FunctionFraction from '../math/FunctionFraction';
 import { FUNCTION_ASSESSMENT_QUESTIONS, TRANSFER_ASSESSMENT_FUNCTION } from '../../core/constants/functionAssessments';
+import FunctionAssessmentView from '../assessment/FunctionAssessmentView';
 
 export default function TransferAssessmentScreen() {
   const { session, updateTransferAssessment } = useSessionContext();
@@ -53,49 +52,19 @@ export default function TransferAssessmentScreen() {
   };
 
   return (
-    <div className="container-wide learning-screen transfer-assessment-screen" dir="rtl">
-      <ProgressBar />
-      <header className="renato-title">
-        <span className="renato-eyebrow">בוחן משותף לשני המסלולים</span>
-        <h1>בוחן העברה</h1>
-      </header>
-
-      <section className="card">
-        <p>
-          בחנו את הפונקציה החדשה באופן עצמאי. ענו על כל הסעיפים ללא רמזים או כלי
-          העזר מהפעילות. אפשר לכתוב חישובים בדף טיוטה.
-        </p>
-        <div className="renato-function" aria-label="פונקציית הבוחן">
-          <span className="renato-function-label">הפונקציה לבחינה</span>
-          <FunctionFraction
-            numerator={TRANSFER_ASSESSMENT_FUNCTION.numerator}
-            denominator={TRANSFER_ASSESSMENT_FUNCTION.denominator}
-            ariaLabel={`${TRANSFER_ASSESSMENT_FUNCTION.name} = ${TRANSFER_ASSESSMENT_FUNCTION.expression}`}
-            functionName={TRANSFER_ASSESSMENT_FUNCTION.name}
-            className="renato-function-expression"
-          />
-        </div>
-      </section>
-
-      <section className="card" aria-label="שאלות בוחן ההעברה">
-        {FUNCTION_ASSESSMENT_QUESTIONS.map(({ key, label, rows }) => (
-          <div className="field" key={key}>
-            <label htmlFor={`transfer-${key}`}>{label}</label>
-            <textarea
-              id={`transfer-${key}`}
-              rows={rows}
-              dir="auto"
-              value={answers[key]}
-              onChange={(event) => handleChange(key, event.target.value)}
-            />
-          </div>
-        ))}
-        <div className="btn-group" style={{ justifyContent: 'center' }}>
-          <button className="btn btn-primary" onClick={handleSubmit}>
-            הגשת הבוחן וסיום
-          </button>
-        </div>
-      </section>
-    </div>
+    <FunctionAssessmentView
+      eyebrow="בוחן משותף לשני המסלולים"
+      title="בוחן העברה"
+      description="בחנו את הפונקציה החדשה באופן עצמאי. ענו על כל הסעיפים ללא רמזים או כלי העזר מהפעילות. אפשר לכתוב חישובים בדף טיוטה."
+      assessmentFunction={TRANSFER_ASSESSMENT_FUNCTION}
+      functionAriaLabel="פונקציית הבוחן"
+      questions={FUNCTION_ASSESSMENT_QUESTIONS}
+      answers={answers}
+      idPrefix="transfer"
+      questionsAriaLabel="שאלות בוחן ההעברה"
+      onChange={handleChange}
+      onSubmit={handleSubmit}
+      submitLabel="הגשת הבוחן וסיום"
+    />
   );
 }

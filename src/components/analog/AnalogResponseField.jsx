@@ -1,4 +1,5 @@
 import React from 'react';
+import TextAreaField from '../form/TextAreaField';
 
 export default function AnalogResponseField({
   id,
@@ -9,15 +10,13 @@ export default function AnalogResponseField({
   placeholder,
 }) {
   return (
-    <div className="field">
-      <label htmlFor={id}>{label}</label>
-      <textarea
-        id={id}
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        rows={rows}
-        placeholder={placeholder}
-      />
-    </div>
+    <TextAreaField
+      id={id}
+      label={label}
+      value={value}
+      onChange={onChange}
+      rows={rows}
+      placeholder={placeholder}
+    />
   );
 }

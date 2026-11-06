@@ -22,8 +22,40 @@ export function usePhaseNavigation() {
 
   const goNext = useCallback(() => navigateNext(), [navigateNext]);
 
+  const goToTransferAssessment = useCallback(
+    ({ reason = 'completed' } = {}) => {
+      const endedAt = session.learningEndedAt || Date.now();
+      if (!session.learningEndedAt) {
+        endLearning(endedAt);
+        addLog(LogActionType.LEARNING_COMPLETE, {
+          startedAt: session.learningStartedAt,
+          endedAt,
+          durationSeconds: session.learningStartedAt
+            ? Math.max(0, Math.round((endedAt - session.learningStartedAt) / 1000))
+            : null,
+          reason,
+          studentId: session.studentId,
+          sessionId: session.sessionId,
+          activityPath: session.activityPath,
+        });
+      }
+      goTo(Phase.TRANSFER_EXAM);
+    },
+    [
+      addLog,
+      endLearning,
+      goTo,
+      session.activityPath,
+      session.learningEndedAt,
+      session.learningStartedAt,
+      session.sessionId,
+      session.studentId,
+    ],
+  );
+
   const shortcuts = useMemo(
     () => ({
+      goToLogin: () => goTo(Phase.LOGIN),
       goToPreAssessment: () => goTo(Phase.PRE_ASSESSMENT),
       goToClassic: () => goTo(Phase.CLASSIC),
       goToProblem: () => goTo(Phase.PROBLEM),
@@ -38,28 +70,11 @@ export function usePhaseNavigation() {
       goToRenatoIntercepts: () => goTo(Phase.RENATO_INTERCEPTS),
       goToRenatoExtrema: () => goTo(Phase.RENATO_EXTREMA),
       goToRenatoGraph: () => goTo(Phase.RENATO_GRAPH),
-      goToTransferAssessment: ({ reason = 'completed' } = {}) => {
-        const endedAt = session.learningEndedAt || Date.now();
-        if (!session.learningEndedAt) {
-          endLearning(endedAt);
-          addLog(LogActionType.LEARNING_COMPLETE, {
-            startedAt: session.learningStartedAt,
-            endedAt,
-            durationSeconds: session.learningStartedAt
-              ? Math.max(0, Math.round((endedAt - session.learningStartedAt) / 1000))
-              : null,
-            reason,
-            studentId: session.studentId,
-            sessionId: session.sessionId,
-            activityPath: session.activityPath,
-          });
-        }
-        goTo(Phase.TRANSFER_EXAM);
-      },
+      goToTransferAssessment,
       goToCompletion: () => goTo(Phase.COMPLETION),
       goToDashboard: () => goTo(Phase.DASHBOARD),
     }),
-    [goTo, endLearning, addLog, session.learningEndedAt, session.learningStartedAt, session.studentId, session.sessionId, session.activityPath],
+    [goTo, goToTransferAssessment],
   );
 
   return { currentPhase, phaseHistory, goTo, goNext, ...shortcuts };

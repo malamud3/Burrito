@@ -3,59 +3,43 @@ import { useSessionContext } from '../../context/SessionContext';
 import { useLogContext } from '../../context/LogContext';
 import { useNotification } from '../../context/NotificationContext';
 import { usePhaseNavigation } from '../../hooks/usePhaseNavigation';
-import { ActivityPath, LogActionType, Mode } from '../../core/types/enums';
+import { LogActionType, Mode } from '../../core/types/enums';
 import { STUDY_DURATION_MINUTES } from '../../core/constants/study';
-import { recordStudyPathChoice } from '../../services/StudyAllocationService';
+import { isParticipantAlreadyAssigned } from '../../services/StudyAllocationService';
 
 export default function LoginScreen() {
   const [studentId, setStudentId] = useState('');
   const [mode, setMode] = useState(Mode.STUDENT);
-  const [selectedPath, setSelectedPath] = useState('');
-  const { initSession, startLearning } = useSessionContext();
+  const { initSession } = useSessionContext();
   const { addLog } = useLogContext();
-  const { goToClassic, goToRenato, goToDashboard } = usePhaseNavigation();
+  const { goToPreAssessment, goToDashboard } = usePhaseNavigation();
   const { show } = useNotification();
 
   const handleStart = () => {
     if (!studentId.trim()) return show('נא להזין קוד תלמיד/ה', '⚠️');
     const participantId = studentId.trim();
-    let activityPath = selectedPath || ActivityPath.CLASSIC;
-    let pathChoice = null;
     if (mode === Mode.STUDENT) {
-      if (!selectedPath) return show('נא לבחור מסלול למידה', '⚠️');
       try {
-        const result = recordStudyPathChoice(participantId, selectedPath);
-        if (result.duplicate) {
-          return show('קוד המשתתף/ת כבר השתתף/ה. אין להשתמש בו שוב במחקר.', '⚠️');
+        if (isParticipantAlreadyAssigned(participantId)) {
+          return show('קוד המשתתף/ת כבר הוקצה בדפדפן זה. אין להשתמש בו שוב בהדגמה.', '⚠️');
         }
-        ({ activityPath, ...pathChoice } = result.assignment);
       } catch (error) {
-        return show(error.message || 'לא ניתן לשמור את בחירת המסלול.', '⚠️');
+        return show(error.message || 'לא ניתן לבדוק את נתוני ההקצאה להדגמה.', '⚠️');
       }
     }
 
-    const sessionId = initSession(participantId, activityPath, mode, pathChoice);
-    addLog(LogActionType.ACTIVITY_START, {
-      schemaVersion: 1,
-      studentId: participantId,
-      sessionId,
-      activityPath,
-      mode,
-      ...(pathChoice || {}),
-      studyDurationMinutes: mode === Mode.STUDENT ? STUDY_DURATION_MINUTES : null,
-    });
+    const sessionId = initSession(participantId, null, mode, null);
 
-    if (mode === Mode.RESEARCHER) goToDashboard();
-    else {
-      const startedAt = startLearning();
-      addLog(LogActionType.LEARNING_START, {
-        startedAt,
-        durationLimitMinutes: STUDY_DURATION_MINUTES,
-        activityPath,
+    if (mode === Mode.RESEARCHER) {
+      addLog(LogActionType.ACTIVITY_START, {
+        schemaVersion: 1,
+        studentId: participantId,
+        sessionId,
+        activityPath: null,
+        mode,
       });
-      if (activityPath === ActivityPath.RENATO) goToRenato();
-      else goToClassic();
-    }
+      goToDashboard();
+    } else goToPreAssessment();
 
     return show('הפגישה החלה. בהצלחה!', '🚀');
   };
@@ -75,14 +59,14 @@ export default function LoginScreen() {
             <span>מגלים את הדרך.</span>
           </h1>
           <p className="login-story-description">
-            סביבת למידה ממוקדת לחקירת פונקציות, עם בחירה בין שתי דרכי חשיבה
+            סביבת למידה ממוקדת לחקירת פונקציות, עם שתי דרכים שונות לארגון החקירה
             וכלים שעוזרים להפוך כל שלב להבנה.
           </p>
           <div className="login-feature-grid" aria-label="מה מחכה לך במרחב">
             <div className="login-feature">
               <span>01</span>
-              <strong>בוחרים מסלול</strong>
-              <small>קלאסי או חשיבה חישובית</small>
+              <strong>מקבלים מסלול</strong>
+              <small>הקצאה אקראית בהדגמה</small>
             </div>
             <div className="login-feature">
               <span>02</span>
@@ -107,7 +91,7 @@ export default function LoginScreen() {
             <h2 id="login-form-title">מתחילים כאן</h2>
           </div>
           <p className="login-subtitle">
-            הזינו קוד ובחרו איך תרצו לחקור היום.
+            הזינו קוד כדי להתחיל. במסלול ההדגמה התנאי ייקבע אוטומטית לאחר הבוחן המקדים.
           </p>
 
           <div className="field login-field">
@@ -131,49 +115,22 @@ export default function LoginScreen() {
           </div>
 
           {mode === Mode.STUDENT && (
-            <>
-              <fieldset className="login-path-picker">
-                <legend>בחר/י מסלול למידה</legend>
-                <label className="login-path-option">
-                  <input
-                    type="radio"
-                    name="activityPath"
-                    value={ActivityPath.CLASSIC}
-                    checked={selectedPath === ActivityPath.CLASSIC}
-                    onChange={(event) => setSelectedPath(event.target.value)}
-                  />
-                  <span>
-                    <strong>המסלול הקלאסי</strong>
-                    <span>חקירת הפונקציה באמצעות שאלות ישירות</span>
-                  </span>
-                </label>
-                <label className="login-path-option">
-                  <input
-                    type="radio"
-                    name="activityPath"
-                    value={ActivityPath.RENATO}
-                    checked={selectedPath === ActivityPath.RENATO}
-                    onChange={(event) => setSelectedPath(event.target.value)}
-                  />
-                  <span>
-                    <strong>מסלול רנאטו</strong>
-                    <span>חקירה באמצעות ארבע כרטיסיות חשיבה חישובית</span>
-                  </span>
-                </label>
-              </fieldset>
-              <div className="login-research-notice" role="note">
-                <strong>מהלך המפגש</strong>
-                <span>
-                  הלמידה מתחילה מיד לאחר הכניסה. שני המסלולים מוגבלים ל־
-                  {STUDY_DURATION_MINUTES} דקות, עם אותם כלי שרטוט ומדיניות עזרה.
-                </span>
-              </div>
-            </>
+            <div className="login-research-notice" role="note">
+              <strong>מהלך ההדגמה</strong>
+              <span>
+                תחילה יוגש בוחן מקדים. אחריו ייקבע מסלול באופן אקראי, ויתחיל
+                טיימר למידה של {STUDY_DURATION_MINUTES} דקות.
+              </span>
+              <span>
+                הדגמה בלבד: ההקצאה נשמרת בדפדפן הזה ואינה מתואמת בין מכשירים.
+                אין להשתמש בה לאיסוף נתוני מחקר.
+              </span>
+            </div>
           )}
 
           <div className="btn-group login-actions">
             <button className="btn btn-primary" onClick={handleStart}>
-              התחל/י למידה
+              {mode === Mode.STUDENT ? 'התחל/י בוחן מקדים' : 'פתח/י לוח בקרה'}
             </button>
           </div>
         </section>

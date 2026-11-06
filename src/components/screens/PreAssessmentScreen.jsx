@@ -4,14 +4,21 @@ import { useLogContext } from '../../context/LogContext';
 import { useNotification } from '../../context/NotificationContext';
 import { usePhaseNavigation } from '../../hooks/usePhaseNavigation';
 import { useLogger } from '../../hooks/useLogger';
-import { ActivityPath, LogActionType } from '../../core/types/enums';
+import { ActivityPath, LogActionType, Mode } from '../../core/types/enums';
 import { FUNCTION_ASSESSMENT_QUESTIONS, PRE_ASSESSMENT_FUNCTION } from '../../core/constants/functionAssessments';
+import { STUDY_DURATION_MINUTES } from '../../core/constants/study';
+import { assignDemoStudyPath } from '../../services/StudyAllocationService';
 import ProgressBar from '../layout/ProgressBar';
 import FunctionFraction from '../math/FunctionFraction';
 
 export default function PreAssessmentScreen() {
-  const { session, updatePreAssessment, startLearning } = useSessionContext();
-  const { logs } = useLogContext();
+  const {
+    session,
+    assignStudyPath,
+    updatePreAssessment,
+    startLearning,
+  } = useSessionContext();
+  const { logs, addLog } = useLogContext();
   const { log } = useLogger();
   const { goToClassic, goToRenato } = usePhaseNavigation();
   const { show } = useNotification();
@@ -46,18 +53,44 @@ export default function PreAssessmentScreen() {
       return;
     }
 
+    let assignment;
+    try {
+      const result = assignDemoStudyPath(session.studentId);
+      if (result.duplicate) {
+        show('קוד המשתתף/ת כבר הוקצה בדפדפן זה. לא ניתן להתחיל הדגמה נוספת.', '⚠️');
+        return;
+      }
+      assignment = result.assignment;
+    } catch (error) {
+      show(error.message || 'לא ניתן לבצע הקצאה להדגמה.', '⚠️');
+      return;
+    }
+
+    const { activityPath, ...allocation } = assignment;
+    assignStudyPath(activityPath, allocation);
     log(LogActionType.PRE_ASSESSMENT_SUBMIT, {
       schemaVersion: 1,
       functionExpression: PRE_ASSESSMENT_FUNCTION.expression,
       assessment: answers,
     });
-    const startedAt = startLearning();
-    log(LogActionType.LEARNING_START, {
-      startedAt,
-      durationLimitMinutes: 30,
-      activityPath: session.activityPath,
+    addLog(LogActionType.ACTIVITY_START, {
+      schemaVersion: 1,
+      studentId: session.studentId,
+      sessionId: session.sessionId,
+      activityPath,
+      mode: Mode.STUDENT,
+      ...assignment,
+      studyDurationMinutes: STUDY_DURATION_MINUTES,
     });
-    if (session.activityPath === ActivityPath.RENATO) goToRenato();
+    const startedAt = startLearning();
+    addLog(LogActionType.LEARNING_START, {
+      studentId: session.studentId,
+      sessionId: session.sessionId,
+      activityPath,
+      startedAt,
+      durationLimitMinutes: STUDY_DURATION_MINUTES,
+    });
+    if (activityPath === ActivityPath.RENATO) goToRenato();
     else goToClassic();
   };
 

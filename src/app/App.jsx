@@ -11,6 +11,14 @@ import { PHASE_PATHS } from '../core/constants/routes';
 import AppHeader from '../components/layout/AppHeader';
 import { SCREEN_REGISTRY } from './screenRegistry';
 
+const CLASSIC_PHASES = new Set([
+  Phase.CLASSIC,
+  Phase.CLASSIC_EXTREMA,
+  Phase.CLASSIC_ASYMPTOTES,
+  Phase.CLASSIC_INTERCEPTS,
+  Phase.CLASSIC_GRAPH,
+]);
+
 const RENATO_PHASES = new Set([
   Phase.RENATO,
   Phase.RENATO_ASYMPTOTES,
@@ -22,11 +30,14 @@ const RENATO_PHASES = new Set([
 function PhaseRoute({ phase, Screen }) {
   const { session } = useSessionContext();
   const { logs } = useLogContext();
-  const isLearningPhase = phase === Phase.CLASSIC || RENATO_PHASES.has(phase);
+  const isLearningPhase = CLASSIC_PHASES.has(phase) || RENATO_PHASES.has(phase);
   const timeLimitReached =
     session.mode === Mode.STUDENT &&
     session.learningStartedAt &&
     Date.now() - session.learningStartedAt >= STUDY_DURATION_SECONDS * 1000;
+  const learningPath = session.activityPath === ActivityPath.RENATO
+    ? PHASE_PATHS[Phase.RENATO]
+    : PHASE_PATHS[Phase.CLASSIC];
   if (phase !== Phase.LOGIN && !session.isActive) {
     return <Navigate to={PHASE_PATHS[Phase.LOGIN]} replace />;
   }
@@ -38,8 +49,25 @@ function PhaseRoute({ phase, Screen }) {
   ) {
     return <Navigate to={PHASE_PATHS[Phase.DASHBOARD]} replace />;
   }
+  if (phase === Phase.PRE_ASSESSMENT && session.learningStartedAt) {
+    return <Navigate to={learningPath} replace />;
+  }
+  if (
+    isLearningPhase &&
+    !session.learningStartedAt &&
+    (!session.activityPath || session.allocation?.method === 'demo_local_permuted_blocks')
+  ) {
+    return <Navigate to={PHASE_PATHS[Phase.PRE_ASSESSMENT]} replace />;
+  }
   if (isLearningPhase && (timeLimitReached || session.learningEndedAt)) {
     return <Navigate to={PHASE_PATHS[Phase.TRANSFER_EXAM]} replace />;
+  }
+  if (
+    phase === Phase.TRANSFER_EXAM &&
+    !session.learningStartedAt &&
+    !timeLimitReached
+  ) {
+    return <Navigate to={PHASE_PATHS[Phase.PRE_ASSESSMENT]} replace />;
   }
   if (
     phase === Phase.TRANSFER_EXAM &&
@@ -47,9 +75,6 @@ function PhaseRoute({ phase, Screen }) {
     !session.learningEndedAt &&
     !timeLimitReached
   ) {
-    const learningPath = session.activityPath === ActivityPath.RENATO
-      ? PHASE_PATHS[Phase.RENATO]
-      : PHASE_PATHS[Phase.CLASSIC];
     return <Navigate to={learningPath} replace />;
   }
   if (
@@ -65,15 +90,8 @@ function PhaseRoute({ phase, Screen }) {
   if (RENATO_PHASES.has(phase) && session.activityPath !== ActivityPath.RENATO) {
     return <Navigate to={PHASE_PATHS[Phase.CLASSIC]} replace />;
   }
-  if (phase === Phase.CLASSIC && session.activityPath !== ActivityPath.CLASSIC) {
+  if (CLASSIC_PHASES.has(phase) && session.activityPath !== ActivityPath.CLASSIC) {
     return <Navigate to={PHASE_PATHS[Phase.RENATO]} replace />;
-  }
-  if (
-    phase === Phase.COMPLETION &&
-    session.activityPath === ActivityPath.RENATO &&
-    !session.graphWork.graphStrokes.length
-  ) {
-    return <Navigate to={PHASE_PATHS[Phase.RENATO_GRAPH]} replace />;
   }
   return <Screen />;
 }
@@ -89,7 +107,7 @@ function AppShell() {
   const instructionIsActive =
     session.isActive &&
     session.mode === Mode.STUDENT &&
-    (currentPhase === Phase.CLASSIC || RENATO_PHASES.has(currentPhase));
+    (CLASSIC_PHASES.has(currentPhase) || RENATO_PHASES.has(currentPhase));
 
   useEffect(() => {
     if (!instructionIsActive) return undefined;
@@ -126,7 +144,7 @@ function AppShell() {
         durationSeconds: STUDY_DURATION_SECONDS,
       });
     }
-    if (currentPhase === Phase.CLASSIC || RENATO_PHASES.has(currentPhase)) {
+    if (CLASSIC_PHASES.has(currentPhase) || RENATO_PHASES.has(currentPhase)) {
       goToTransferAssessment({ reason: 'time_limit' });
     } else {
       const endedAt = endLearning();
@@ -169,17 +187,6 @@ function AppShell() {
             element={<PhaseRoute phase={phase} Screen={Screen} />}
           />
         ))}
-        <Route
-          path={PHASE_PATHS[Phase.PRE_ASSESSMENT]}
-          element={
-            <Navigate
-              to={session.activityPath === ActivityPath.RENATO
-                ? PHASE_PATHS[Phase.RENATO]
-                : PHASE_PATHS[Phase.CLASSIC]}
-              replace
-            />
-          }
-        />
         <Route path="/renato" element={<Navigate to={PHASE_PATHS[Phase.RENATO]} replace />} />
         <Route path="/" element={<Navigate to={rootPath} replace />} />
         <Route path="*" element={<Navigate to={rootPath} replace />} />

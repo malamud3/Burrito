@@ -1441,6 +1441,26 @@ label { margin-bottom: 7px; color: #494840; font-size: 0.9rem; font-weight: 600;
     resize: vertical;
     background: #fbfaf6;
 }
+.function-process-task {
+    display: grid;
+    gap: 6px;
+    margin-top: 16px;
+    padding-top: 14px;
+    border-top: 1px solid var(--border);
+}
+.function-process-task p {
+    margin: 0;
+    color: var(--text2);
+    font-size: 0.82rem;
+    line-height: 1.55;
+}
+.function-process-task textarea {
+    width: 100%;
+    min-height: 58px;
+    padding: 8px 10px;
+    resize: vertical;
+    background: #fbfaf6;
+}
 .structured-math-answer {
     display: grid;
     justify-items: start;
@@ -2049,10 +2069,54 @@ label { margin-bottom: 7px; color: #494840; font-size: 0.9rem; font-weight: 600;
     box-shadow: 0 6px 22px rgba(71, 65, 48, 0.045);
 }
 .dashboard-screen > .card { margin-top: 16px; }
+.assessment-scoring h2 { margin-bottom: 8px; }
+.assessment-rubric-anchors { margin: 12px 0 20px; padding-inline-start: 22px; }
+.assessment-scoring-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 18px;
+    margin: 14px 0;
+    color: var(--text2);
+}
+.assessment-score-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 120px;
+    gap: 16px;
+    align-items: start;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--border);
+}
+.assessment-score-row h3 { margin: 0 0 5px; font-size: 1rem; }
+.assessment-score-row p { margin: 0 0 8px; color: var(--text2); }
+.assessment-score-row .assessment-answer-key p { margin: 8px 0 0; color: var(--text2); }
+.assessment-score-row blockquote {
+    margin: 0;
+    padding: 10px 12px;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    border-inline-start: 3px solid var(--border);
+    background: #f9f7f0;
+}
+.assessment-score-row label { display: grid; gap: 5px; }
+.assessment-scoring-footer {
+    position: sticky;
+    bottom: 0;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 16px;
+    padding: 14px 0;
+    background: var(--surface);
+}
+.assessment-scoring-footer strong { font-size: 1.15rem; }
+.assessment-scoring-footer span { color: var(--text2); font-size: .9rem; }
 
 @media (max-width: 768px) {
     .learning-screen:not(.dashboard-screen):not(.login-screen) { width: 100%; }
     .learning-screen .ct-tool { padding: 17px; }
+    .assessment-score-row { grid-template-columns: 1fr; }
     .dashboard-screen > .app-header {
         flex-direction: column;
         align-items: stretch;

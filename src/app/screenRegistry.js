@@ -5,20 +5,31 @@
 
 import { Phase } from '../core/types/enums';
 import LoginScreen from '../components/screens/LoginScreen';
+import PreAssessmentScreen from '../components/screens/PreAssessmentScreen';
 import RenatoScreen, {
   RenatoAsymptotesScreen,
   RenatoExtremaScreen,
   RenatoGraphScreen,
   RenatoInterceptsScreen,
 } from '../components/screens/RenatoScreen';
-import ClassicScreen from '../components/screens/ClassicScreen';
+import ClassicScreen, {
+  ClassicAsymptotesScreen,
+  ClassicExtremaScreen,
+  ClassicGraphScreen,
+  ClassicInterceptsScreen,
+} from '../components/screens/ClassicScreen';
 import TransferAssessmentScreen from '../components/screens/TransferAssessmentScreen';
 import CompletionScreen from '../components/screens/CompletionScreen';
 import ResearcherDashboard from '../components/screens/ResearcherDashboard';
 
 export const SCREEN_REGISTRY = {
   [Phase.LOGIN]: LoginScreen,
+  [Phase.PRE_ASSESSMENT]: PreAssessmentScreen,
   [Phase.CLASSIC]: ClassicScreen,
+  [Phase.CLASSIC_EXTREMA]: ClassicExtremaScreen,
+  [Phase.CLASSIC_ASYMPTOTES]: ClassicAsymptotesScreen,
+  [Phase.CLASSIC_INTERCEPTS]: ClassicInterceptsScreen,
+  [Phase.CLASSIC_GRAPH]: ClassicGraphScreen,
   [Phase.RENATO]: RenatoScreen,
   [Phase.RENATO_ASYMPTOTES]: RenatoAsymptotesScreen,
   [Phase.RENATO_INTERCEPTS]: RenatoInterceptsScreen,

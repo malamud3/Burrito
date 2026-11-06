@@ -4,26 +4,32 @@ import { useLogContext } from '../../context/LogContext';
 import { useLogExport } from '../../hooks/useLogExport';
 import { computeLearningDurations, computeSessionSummary } from '../../services/LogAnalyticsService';
 import { LogActionType } from '../../core/types/enums';
+import { PHASE_STORAGE_KEY } from '../../context/PhaseContext';
+import { SESSION_STORAGE_KEY } from '../../services/SessionStorage';
 import { formatTime } from '../../core/utils/timeFormatter';
 import StatCard from '../researcher/StatCard';
 import LogPanel from '../researcher/LogPanel';
 import StudentTimeline from '../researcher/StudentTimeline';
+import AssessmentScoringPanel from '../researcher/AssessmentScoringPanel';
 
 const TABS = [
   { id: 'log', label: 'לוג מלא' },
   { id: 'timeline', label: 'ציר זמן' },
+  { id: 'scoring', label: 'ניקוד בוחנים' },
 ];
 
 export default function ResearcherDashboard() {
   const { session, resetSession } = useSessionContext();
   const { logs } = useLogContext();
-  const { exportJSON, exportCSV } = useLogExport();
+  const { exportJSON, exportCSV, exportAssessmentScoresCSV } = useLogExport();
   const [activeTab, setActiveTab] = useState('log');
 
   const summary = useMemo(() => computeSessionSummary(logs), [logs]);
 
   const handleReload = () => {
     resetSession();
+    window.localStorage.removeItem(SESSION_STORAGE_KEY);
+    window.localStorage.removeItem(PHASE_STORAGE_KEY);
     window.location.reload();
   };
 
@@ -55,6 +61,9 @@ export default function ResearcherDashboard() {
           </button>
           <button className="btn btn-outline btn-sm" onClick={exportCSV}>
             ⬇️ הורד CSV
+          </button>
+          <button className="btn btn-outline btn-sm" onClick={exportAssessmentScoresCSV}>
+            ⬇️ הורד ציוני בוחנים
           </button>
           <button className="btn btn-outline btn-sm" onClick={handleReload}>
             ↺ משתתף/ת חדש/ה
@@ -94,6 +103,7 @@ export default function ResearcherDashboard() {
             <StudentTimeline logs={logs} />
           </>
         )}
+        {activeTab === 'scoring' && <AssessmentScoringPanel logs={logs} />}
       </div>
     </div>
   );

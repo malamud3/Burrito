@@ -20,14 +20,14 @@ import { useLogContext } from './LogContext';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 const PhaseContext = createContext(null);
-const STORAGE_KEY = 'ctAdapt.phase';
+export const PHASE_STORAGE_KEY = 'ctAdapt.phase';
 
 const readStoredPhase = (activityPath) => {
   if (typeof window === 'undefined' || !window.localStorage) return Phase.LOGIN;
 
   try {
-    const storedPhase = window.localStorage.getItem(STORAGE_KEY);
-    if ([Phase.LOGIN, Phase.DASHBOARD, Phase.COMPLETION].includes(storedPhase)) {
+    const storedPhase = window.localStorage.getItem(PHASE_STORAGE_KEY);
+    if ([Phase.LOGIN, Phase.PRE_ASSESSMENT, Phase.DASHBOARD, Phase.COMPLETION].includes(storedPhase)) {
       return storedPhase;
     }
     if (storedPhase === Phase.TRANSFER_EXAM) return storedPhase;
@@ -40,7 +40,13 @@ const readStoredPhase = (activityPath) => {
         Phase.RENATO_GRAPH,
       ].includes(storedPhase) ? storedPhase : Phase.RENATO;
     }
-    return Phase.CLASSIC;
+    return [
+      Phase.CLASSIC,
+      Phase.CLASSIC_EXTREMA,
+      Phase.CLASSIC_ASYMPTOTES,
+      Phase.CLASSIC_INTERCEPTS,
+      Phase.CLASSIC_GRAPH,
+    ].includes(storedPhase) ? storedPhase : Phase.CLASSIC;
   } catch (error) {
     console.warn('Failed to restore phase from localStorage', error);
     return Phase.LOGIN;
@@ -89,9 +95,9 @@ export function PhaseProvider({ children }) {
     if (typeof window === 'undefined' || !window.localStorage) return;
 
     if (session.isActive) {
-      window.localStorage.setItem(STORAGE_KEY, currentPhase);
+      window.localStorage.setItem(PHASE_STORAGE_KEY, currentPhase);
     } else {
-      window.localStorage.removeItem(STORAGE_KEY);
+      window.localStorage.removeItem(PHASE_STORAGE_KEY);
     }
   }, [currentPhase, session.isActive]);
 

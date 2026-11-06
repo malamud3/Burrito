@@ -38,6 +38,11 @@ export function SessionProvider({ children }) {
         });
         return sessionId;
       },
+      assignStudyPath: (activityPath, allocation) =>
+        dispatch({
+          type: 'ASSIGN_STUDY_PATH',
+          payload: { activityPath, allocation },
+        }),
       setAnswer: (key, value) =>
         dispatch({ type: 'SET_ANSWER', payload: { key, value } }),
       setDetectedDifficulty: (difficulty) =>
@@ -70,6 +75,8 @@ export function SessionProvider({ children }) {
       },
       updatePreAssessment: (patch) =>
         dispatch({ type: 'UPDATE_PRE_ASSESSMENT', payload: patch }),
+      updateStudyPrompt: (key, value) =>
+        dispatch({ type: 'UPDATE_STUDY_PROMPT', payload: { key, value } }),
       resetSession: () => dispatch({ type: 'RESET_SESSION' }),
     }),
     [],

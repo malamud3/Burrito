@@ -44,6 +44,18 @@ test('normalizes legacy and partial session data with complete defaults', () => 
   expect(normalizeSessionState(null)).toBeNull();
 });
 
+test('drops the legacy prefilled sign table from restored Renato work', () => {
+  const session = normalizeSessionState({
+    activityPath: ActivityPath.RENATO,
+    renatoWork: {
+      table: { columns: [{ id: 'legacy', derivative: '-', behavior: '↘' }] },
+    },
+  });
+
+  expect(session.renatoWork).not.toHaveProperty('table');
+  expect(session.renatoWork.signBehavior).toBe('');
+});
+
 test('session reducer preserves immutable updates and monotonic hint progress', () => {
   const initial = createInitialSessionState();
   const withHint = sessionReducer(initial, {

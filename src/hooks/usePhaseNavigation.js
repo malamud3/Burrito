@@ -24,6 +24,7 @@ export function usePhaseNavigation() {
 
   const shortcuts = useMemo(
     () => ({
+      goToPreAssessment: () => goTo(Phase.PRE_ASSESSMENT),
       goToClassic: () => goTo(Phase.CLASSIC),
       goToProblem: () => goTo(Phase.PROBLEM),
       goToSolving: () => goTo(Phase.SOLVING),

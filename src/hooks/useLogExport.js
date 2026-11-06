@@ -5,7 +5,11 @@
 import { useCallback } from 'react';
 import { useLogContext } from '../context/LogContext';
 import { useSessionContext } from '../context/SessionContext';
-import { downloadJSON, downloadCSV } from '../services/ExportService';
+import {
+  downloadAssessmentScoresCSV,
+  downloadCSV,
+  downloadJSON,
+} from '../services/ExportService';
 
 export function useLogExport() {
   const { getLogs } = useLogContext();
@@ -19,6 +23,10 @@ export function useLogExport() {
     () => downloadCSV(getLogs(), session),
     [getLogs, session],
   );
+  const exportAssessmentScoresCSV = useCallback(
+    () => downloadAssessmentScoresCSV(getLogs()),
+    [getLogs],
+  );
 
-  return { exportJSON, exportCSV };
+  return { exportJSON, exportCSV, exportAssessmentScoresCSV };
 }

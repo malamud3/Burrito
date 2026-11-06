@@ -1,8 +1,15 @@
 import { detectDifficulty, inferWeakestSkill } from '../src/services/DifficultyDetectionService';
 import { selectAnalogTask } from '../src/services/AnalogTaskSelector';
 import { computeLearningDurations, computePhaseDurations } from '../src/services/LogAnalyticsService';
-import { logsToCSV } from '../src/services/ExportService';
+import {
+  logsToAssessmentScoresCSV,
+  logsToCSV,
+  logsToJSON,
+} from '../src/services/ExportService';
 import { CTSkill, LogActionType, Group } from '../src/core/types/enums';
+import { getAssessmentScoringRecords } from '../src/services/AssessmentScoringService';
+import { FUNCTION_ASSESSMENT_QUESTIONS } from '../src/core/constants/functionAssessments';
+import { ASSESSMENT_ANSWER_KEYS } from '../src/core/constants/assessmentAnswerKeys';
 
 const toolState = (o = {}) => ({
   decomposition: { steps: [{ id: 1, value: '' }] },
@@ -69,4 +76,155 @@ test('csv escapes quotes + BOM', () => {
   expect(csv.startsWith('\uFEFF')).toBe(true);
   const dataCell = csv.split('\n')[1].match(/^"a","x","1","edit","","(.*)"$/)[1].replace(/""/g, '"');
   expect(JSON.parse(dataCell)).toEqual({ v: 'he said "hi"' });
+});
+
+test('JSON export preserves matched study-prompt responses', () => {
+  const exported = JSON.parse(logsToJSON([], {
+    studentId: 'P01',
+    sessionId: 's1',
+    activityPath: 'renato',
+    mode: 'student',
+    studyPrompts: { domain: 'ordered steps' },
+  }));
+
+  expect(exported.session.studyPrompts).toEqual({ domain: 'ordered steps' });
+});
+
+test('assessment scoring records are deidentified and use the latest manual score', () => {
+  const assessment = Object.fromEntries(
+    FUNCTION_ASSESSMENT_QUESTIONS.map(({ key }, index) => [key, `answer ${index}`]),
+  );
+  const logs = [
+    {
+      ...log(LogActionType.PRE_ASSESSMENT_SUBMIT, null, 1000),
+      data: {
+        sessionId: 'session-1',
+        studentId: 'P01',
+        activityPath: 'renato',
+        functionExpression: 'x² / (x² − 8x + 15)',
+        assessment,
+      },
+    },
+    {
+      ...log(LogActionType.ASSESSMENT_SCORE, null, 2000),
+      data: {
+        sessionId: 'session-1',
+        assessmentType: 'preAssessment',
+        rubricVersion: 1,
+        scores: Object.fromEntries(FUNCTION_ASSESSMENT_QUESTIONS.map(({ key }) => [key, 1])),
+      },
+    },
+    {
+      ...log(LogActionType.ASSESSMENT_SCORE, null, 3000),
+      data: {
+        sessionId: 'session-1',
+        assessmentType: 'preAssessment',
+        rubricVersion: 2,
+        scores: Object.fromEntries(FUNCTION_ASSESSMENT_QUESTIONS.map(({ key }) => [key, 2])),
+      },
+    },
+  ];
+
+  const [record] = getAssessmentScoringRecords(logs);
+  expect(record).toMatchObject({
+    sessionId: 'session-1',
+    assessmentType: 'preAssessment',
+    total: 20,
+    maxScore: 20,
+    scoredAt: 3000,
+    rubricVersion: 2,
+  });
+  expect(record.answers.domain).toBe('answer 0');
+  expect(record).not.toHaveProperty('studentId');
+  expect(record).not.toHaveProperty('activityPath');
+});
+
+test('both form-specific answer keys cover all scored items', () => {
+  const questionKeys = FUNCTION_ASSESSMENT_QUESTIONS.map(({ key }) => key).sort();
+
+  expect(Object.keys(ASSESSMENT_ANSWER_KEYS.preAssessment).sort()).toEqual(questionKeys);
+  expect(Object.keys(ASSESSMENT_ANSWER_KEYS.transferAssessment).sort()).toEqual(questionKeys);
+  expect(ASSESSMENT_ANSWER_KEYS.preAssessment.domain.expected).toContain('3, 5');
+  expect(ASSESSMENT_ANSWER_KEYS.transferAssessment.domain.expected).toContain('2, 4');
+  expect(ASSESSMENT_ANSWER_KEYS.preAssessment.extremaPoints.expected).toContain('−15');
+  expect(ASSESSMENT_ANSWER_KEYS.transferAssessment.extremaPoints.expected).toContain('−8');
+});
+
+test('JSON export aggregates latest manual assessment scores by session', () => {
+  const scores = Object.fromEntries(FUNCTION_ASSESSMENT_QUESTIONS.map(({ key }) => [key, 2]));
+  const logs = [
+    {
+      ...log(LogActionType.PRE_ASSESSMENT_SUBMIT, null, 1000),
+      data: {
+        sessionId: 'session-1',
+        assessment: {},
+        functionExpression: 'h(x)',
+      },
+    },
+    {
+      ...log(LogActionType.ASSESSMENT_SCORE, null, 2000),
+      data: {
+        sessionId: 'session-1',
+        assessmentType: 'preAssessment',
+        rubricVersion: 2,
+        scores,
+      },
+    },
+  ];
+  const exported = JSON.parse(logsToJSON(logs, { sessionId: 'researcher-session' }));
+
+  expect(exported.sessions.find(({ sessionId }) => sessionId === 'session-1')
+    .assessmentScores.preAssessment).toMatchObject({
+      total: 20,
+      maxScore: 20,
+      rubricVersion: 2,
+    });
+});
+
+test('assessment score CSV joins pre and transfer scores without participant codes', () => {
+  const preScores = Object.fromEntries(FUNCTION_ASSESSMENT_QUESTIONS.map(({ key }) => [key, 2]));
+  const transferScores = Object.fromEntries(FUNCTION_ASSESSMENT_QUESTIONS.map(({ key }) => [key, 1]));
+  const assessment = Object.fromEntries(FUNCTION_ASSESSMENT_QUESTIONS.map(({ key }) => [key, 'answer']));
+  const logs = [
+    {
+      ...log(LogActionType.ACTIVITY_START, null, 1000),
+      data: { sessionId: 's1', studentId: 'P01', activityPath: 'renato', mode: 'student' },
+    },
+    {
+      ...log(LogActionType.PRE_ASSESSMENT_SUBMIT, null, 2000),
+      data: { sessionId: 's1', assessment, functionExpression: 'h(x)' },
+    },
+    {
+      ...log(LogActionType.TRANSFER_SUBMIT, null, 3000),
+      data: { sessionId: 's1', activityPath: 'renato', assessment, functionExpression: 'g(x)' },
+    },
+    {
+      ...log(LogActionType.ASSESSMENT_SCORE, null, 4000),
+      data: { sessionId: 's1', assessmentType: 'preAssessment', rubricVersion: 2, scores: preScores },
+    },
+    {
+      ...log(LogActionType.ASSESSMENT_SCORE, null, 5000),
+      data: { sessionId: 's1', assessmentType: 'transferAssessment', rubricVersion: 2, scores: transferScores },
+    },
+  ];
+
+  const csv = logsToAssessmentScoresCSV(logs);
+  const [headerLine, rowLine] = csv.replace(/^\uFEFF/, '').split('\n');
+  const header = headerLine.split(',');
+  const values = rowLine.match(/"(?:[^"]|"")*"/g).map((cell) =>
+    cell.slice(1, -1).replace(/""/g, '"'),
+  );
+  const cell = (name) => values[header.indexOf(name)];
+
+  expect(cell('sessionId')).toBe('s1');
+  expect(cell('activityPath')).toBe('renato');
+  expect(cell('preStatus')).toBe('scored');
+  expect(cell('preTotal')).toBe('20');
+  expect(cell('transferStatus')).toBe('scored');
+  expect(cell('transferTotal')).toBe('10');
+  expect(cell('preRubricVersion')).toBe('2');
+  expect(cell('transferRubricVersion')).toBe('2');
+  expect(cell('preAssessment_domain')).toBe('2');
+  expect(cell('transferAssessment_domain')).toBe('1');
+  expect(csv).not.toContain('P01');
 });

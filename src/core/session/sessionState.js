@@ -1,5 +1,5 @@
 import { ActivityPath, Mode } from '../types/enums';
-import { RENATO_FUNCTION, RENATO_TABLE_COLUMNS } from '../constants/renato';
+import { RENATO_FUNCTION } from '../constants/renato';
 import { createEmptyFunctionAssessment } from '../constants/functionAssessments';
 
 export const createInitialSessionState = () => ({
@@ -58,6 +58,12 @@ export const createInitialSessionState = () => ({
     graph: '',
   },
   preAssessment: createEmptyFunctionAssessment(),
+  studyPrompts: {
+    domain: '',
+    extrema: '',
+    asymptotes: '',
+    intercepts: '',
+  },
   detectedDifficulty: null,
   selectedAnalogTask: null,
   hintLevel: 0,
@@ -79,16 +85,9 @@ export const createInitialSessionState = () => ({
     functionExpression: RENATO_FUNCTION,
     cards: {
       domain: { order: 1, answer: '' },
-      extrema: { order: 4, suspectedX: '', points: '', derivative: '', checked: false },
-      asymptotes: { order: 2, vertical: '', horizontal: '', checked: false },
-      intercepts: { order: 3, yAxis: '', xAxis: '', checked: false },
-    },
-    table: {
-      columns: RENATO_TABLE_COLUMNS.map(({ id }) => ({
-        id,
-        derivative: '',
-        behavior: '',
-      })),
+      extrema: { order: 2, suspectedX: '', points: '', derivative: '', checked: false },
+      asymptotes: { order: 3, vertical: '', horizontal: '', checked: false },
+      intercepts: { order: 4, yAxis: '', xAxis: '', checked: false },
     },
     valueCache: {},
     cacheNotification: null,
@@ -98,6 +97,7 @@ export const createInitialSessionState = () => ({
     graphMarkers: false,
     graphAsymptoteStyle: 'dashed',
     drawnDomains: { 1: false, 2: false, 3: false, 4: false },
+    signBehavior: '',
   },
 });
 
@@ -109,9 +109,13 @@ export function normalizeSessionState(parsed) {
     ...initial,
     ...parsed,
     sessionId: parsed.sessionId || `session_${parsed.startTime || Date.now()}`,
-    activityPath: parsed.activityPath === ActivityPath.RENATO
-      ? ActivityPath.RENATO
-      : ActivityPath.CLASSIC,
+    activityPath: parsed.activityPath === null &&
+      parsed.mode === Mode.STUDENT &&
+      !parsed.learningStartedAt
+      ? null
+      : parsed.activityPath === ActivityPath.RENATO
+        ? ActivityPath.RENATO
+        : ActivityPath.CLASSIC,
     allocation: parsed.allocation || null,
     graphWork: {
       ...initial.graphWork,
@@ -132,6 +136,14 @@ export function normalizeSessionState(parsed) {
       ...initial.preAssessment,
       ...(parsed.preAssessment || {}),
     },
+    studyPrompts: Object.fromEntries(
+      Object.entries(initial.studyPrompts).map(([key, defaultValue]) => [
+        key,
+        typeof parsed.studyPrompts?.[key] === 'string'
+          ? parsed.studyPrompts[key]
+          : defaultValue,
+      ]),
+    ),
     effortRatings: { ...initial.effortRatings, ...(parsed.effortRatings || {}) },
     toolState: {
       ...initial.toolState,
@@ -151,7 +163,9 @@ export function normalizeSessionState(parsed) {
     },
     renatoWork: {
       ...initial.renatoWork,
-      ...(parsed.renatoWork || {}),
+      ...Object.fromEntries(
+        Object.entries(parsed.renatoWork || {}).filter(([key]) => key !== 'table'),
+      ),
       cards: {
         ...initial.renatoWork.cards,
         ...(parsed.renatoWork?.cards || {}),
@@ -171,13 +185,6 @@ export function normalizeSessionState(parsed) {
           ...initial.renatoWork.cards.intercepts,
           ...(parsed.renatoWork?.cards?.intercepts || {}),
         },
-      },
-      table: {
-        ...initial.renatoWork.table,
-        ...(parsed.renatoWork?.table || {}),
-        columns: Array.isArray(parsed.renatoWork?.table?.columns)
-          ? parsed.renatoWork.table.columns
-          : initial.renatoWork.table.columns,
       },
       drawnDomains: {
         ...initial.renatoWork.drawnDomains,
@@ -206,6 +213,12 @@ export function sessionReducer(state, action) {
         ...action.payload,
         isActive: true,
         startTime: Date.now(),
+      };
+    case 'ASSIGN_STUDY_PATH':
+      return {
+        ...state,
+        activityPath: action.payload.activityPath,
+        allocation: action.payload.allocation,
       };
     case 'SET_ANSWER':
       return {
@@ -264,6 +277,14 @@ export function sessionReducer(state, action) {
       return {
         ...state,
         preAssessment: { ...state.preAssessment, ...action.payload },
+      };
+    case 'UPDATE_STUDY_PROMPT':
+      return {
+        ...state,
+        studyPrompts: {
+          ...state.studyPrompts,
+          [action.payload.key]: action.payload.value,
+        },
       };
     case 'RESET_SESSION':
       return createInitialSessionState();

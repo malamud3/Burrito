@@ -4,6 +4,12 @@
 // ============================================================
 
 import { formatTimestamp } from '../core/utils/timeFormatter';
+import {
+  getAssessmentScoringRecords,
+  getLatestAssessmentScores,
+} from './AssessmentScoringService';
+import { FUNCTION_ASSESSMENT_QUESTIONS } from '../core/constants/functionAssessments';
+import { LogActionType } from '../core/types/enums';
 
 function triggerDownload(content, filename, mime) {
   const blob = new Blob([content], { type: mime });
@@ -19,6 +25,7 @@ function triggerDownload(content, filename, mime) {
 
 export function logsToJSON(logs, session) {
   const sessions = new Map();
+  const assessmentScores = getLatestAssessmentScores(logs);
   logs.forEach((entry) => {
     const sessionId = entry.data?.sessionId;
     if (!sessionId) return;
@@ -46,6 +53,11 @@ export function logsToJSON(logs, session) {
     }
     sessions.set(sessionId, metadata);
   });
+  assessmentScores.forEach((scores, sessionId) => {
+    const metadata = sessions.get(sessionId) || { sessionId };
+    metadata.assessmentScores = scores;
+    sessions.set(sessionId, metadata);
+  });
 
   return JSON.stringify(
     {
@@ -62,10 +74,12 @@ export function logsToJSON(logs, session) {
         learningEndedAt: session.learningEndedAt,
         allocation: session.allocation,
         preAssessment: session.preAssessment,
+        studyPrompts: session.studyPrompts,
         classicWork: session.classicWork,
         renatoWork: session.renatoWork,
         graphWork: session.graphWork,
         transferAssessment: session.transferAssessment,
+        assessmentScores: assessmentScores.get(session.sessionId) || {},
       },
       sessions: Array.from(sessions.values()),
       logs,
@@ -88,6 +102,70 @@ export function logsToCSV(logs) {
   return '\uFEFF' + [header.join(','), ...rows].join('\n');
 }
 
+export function logsToAssessmentScoresCSV(logs) {
+  const sessionPaths = new Map();
+  logs.forEach((entry) => {
+    const sessionId = entry.data?.sessionId;
+    const activityPath = entry.data?.activityPath;
+    if (
+      sessionId &&
+      activityPath &&
+      [LogActionType.ACTIVITY_START, LogActionType.TRANSFER_SUBMIT].includes(entry.actionType)
+    ) {
+      sessionPaths.set(sessionId, activityPath);
+    }
+  });
+
+  const sessions = new Map();
+  getAssessmentScoringRecords(logs).forEach((record) => {
+    const session = sessions.get(record.sessionId) || {
+      sessionId: record.sessionId,
+      preAssessment: null,
+      transferAssessment: null,
+    };
+    session[record.assessmentType] = record;
+    sessions.set(record.sessionId, session);
+  });
+
+  const assessmentColumns = ['preAssessment', 'transferAssessment'];
+  const header = [
+    'sessionId',
+    'activityPath',
+    'preStatus',
+    'preTotal',
+    'preMaxScore',
+    'preRubricVersion',
+    'transferStatus',
+    'transferTotal',
+    'transferMaxScore',
+    'transferRubricVersion',
+    ...FUNCTION_ASSESSMENT_QUESTIONS.flatMap(({ key }) =>
+      assessmentColumns.map((assessmentType) => `${assessmentType}_${key}`)),
+  ];
+  const rows = Array.from(sessions.values()).map((session) => {
+    const status = (record) => (
+      !record ? 'not_submitted' : record.total === null ? 'unscored' : 'scored'
+    );
+    const values = [
+      session.sessionId,
+      sessionPaths.get(session.sessionId) || '',
+      status(session.preAssessment),
+      session.preAssessment?.total ?? '',
+      session.preAssessment ? session.preAssessment.maxScore : '',
+      session.preAssessment?.rubricVersion ?? '',
+      status(session.transferAssessment),
+      session.transferAssessment?.total ?? '',
+      session.transferAssessment ? session.transferAssessment.maxScore : '',
+      session.transferAssessment?.rubricVersion ?? '',
+      ...FUNCTION_ASSESSMENT_QUESTIONS.flatMap(({ key }) =>
+        assessmentColumns.map((assessmentType) => session[assessmentType]?.scores[key] ?? '')),
+    ];
+    return values.map(csvEscape).join(',');
+  });
+
+  return '\uFEFF' + [header.join(','), ...rows].join('\n');
+}
+
 export function downloadJSON(logs, session) {
   const name = `burrito_${session.studentId || 'session'}_${Date.now()}.json`;
   triggerDownload(logsToJSON(logs, session), name, 'application/json');
@@ -96,4 +174,9 @@ export function downloadJSON(logs, session) {
 export function downloadCSV(logs, session) {
   const name = `burrito_${session.studentId || 'session'}_${Date.now()}.csv`;
   triggerDownload(logsToCSV(logs), name, 'text/csv;charset=utf-8');
+}
+
+export function downloadAssessmentScoresCSV(logs) {
+  const name = `burrito_assessment_scores_${Date.now()}.csv`;
+  triggerDownload(logsToAssessmentScoresCSV(logs), name, 'text/csv;charset=utf-8');
 }

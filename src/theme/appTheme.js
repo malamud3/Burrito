@@ -57,6 +57,9 @@ export const appTheme = createTheme({
           borderRadius: 'var(--radius-sm)',
           minHeight: 42,
         },
+        sizeSmall: {
+          minHeight: 34,
+        },
       },
     },
     MuiChip: {
@@ -79,6 +82,16 @@ export const appTheme = createTheme({
           minHeight: 42,
           fontWeight: 600,
           textTransform: 'none',
+        },
+      },
+    },
+    MuiTabs: {
+      styleOverrides: {
+        root: {
+          minHeight: 42,
+        },
+        indicator: {
+          display: 'none',
         },
       },
     },

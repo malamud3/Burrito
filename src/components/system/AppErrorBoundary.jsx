@@ -1,4 +1,8 @@
 import React from 'react';
+import Button from '@mui/material/Button';
+import Paper from '@mui/material/Paper';
+import Stack from '@mui/material/Stack';
+import Typography from '@mui/material/Typography';
 
 export default class AppErrorBoundary extends React.Component {
   state = { hasError: false };
@@ -22,17 +26,23 @@ export default class AppErrorBoundary extends React.Component {
 
     return (
       <main className="app-error-shell" dir="rtl" role="alert">
-        <div className="card app-error-card">
-          <span className="renato-eyebrow">Burrito</span>
-          <h1>אירעה תקלה בלתי צפויה</h1>
-          <p>
-            אפשר לנסות לטעון את סביבת הלמידה מחדש. הנתונים שנשמרו לפני התקלה
-            אמורים להישאר בדפדפן.
-          </p>
-          <button className="btn btn-primary" onClick={this.handleReload}>
-            טעינה מחדש
-          </button>
-        </div>
+        <Paper className="card app-error-card" elevation={0}>
+          <Stack spacing={2} alignItems="center">
+            <Typography component="span" className="renato-eyebrow">
+              Burrito
+            </Typography>
+            <Typography component="h1" variant="h4">
+              אירעה תקלה בלתי צפויה
+            </Typography>
+            <Typography component="p">
+              אפשר לנסות לטעון את סביבת הלמידה מחדש. הנתונים שנשמרו לפני התקלה
+              אמורים להישאר בדפדפן.
+            </Typography>
+            <Button className="btn btn-primary" onClick={this.handleReload} variant="contained">
+              טעינה מחדש
+            </Button>
+          </Stack>
+        </Paper>
       </main>
     );
   }

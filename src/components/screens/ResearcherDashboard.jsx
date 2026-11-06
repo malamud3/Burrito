@@ -11,6 +11,9 @@ import StatCard from '../researcher/StatCard';
 import LogPanel from '../researcher/LogPanel';
 import StudentTimeline from '../researcher/StudentTimeline';
 import AssessmentScoringPanel from '../researcher/AssessmentScoringPanel';
+import ActionButton from '../ui/ActionButton';
+import AppBadge from '../ui/AppBadge';
+import SegmentedTabs from '../ui/SegmentedTabs';
 
 const TABS = [
   { id: 'log', label: 'לוג מלא' },
@@ -55,19 +58,19 @@ export default function ResearcherDashboard() {
       <div className="app-header">
         <h1>📊 לוח בקרה — חוקר/ת</h1>
         <div className="header-info">
-          <span className="badge badge-phase">{session.studentId}</span>
-          <button className="btn btn-outline btn-sm" onClick={exportJSON}>
+          <AppBadge>{session.studentId}</AppBadge>
+          <ActionButton tone="outline" size="small" onClick={exportJSON}>
             ⬇️ הורד לוגים
-          </button>
-          <button className="btn btn-outline btn-sm" onClick={exportCSV}>
+          </ActionButton>
+          <ActionButton tone="outline" size="small" onClick={exportCSV}>
             ⬇️ הורד CSV
-          </button>
-          <button className="btn btn-outline btn-sm" onClick={exportAssessmentScoresCSV}>
+          </ActionButton>
+          <ActionButton tone="outline" size="small" onClick={exportAssessmentScoresCSV}>
             ⬇️ הורד ציוני בוחנים
-          </button>
-          <button className="btn btn-outline btn-sm" onClick={handleReload}>
+          </ActionButton>
+          <ActionButton tone="outline" size="small" onClick={handleReload}>
             ↺ משתתף/ת חדש/ה
-          </button>
+          </ActionButton>
         </div>
       </div>
 
@@ -81,19 +84,12 @@ export default function ResearcherDashboard() {
         כל סשני המשתתפים נשמרים יחד בלוגים.
       </p>
 
-      <div className="tabs" role="tablist">
-        {TABS.map((tab) => (
-          <button
-            key={tab.id}
-            role="tab"
-            aria-selected={activeTab === tab.id}
-            className={`tab ${activeTab === tab.id ? 'active' : ''}`}
-            onClick={() => setActiveTab(tab.id)}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
+      <SegmentedTabs
+        tabs={TABS}
+        value={activeTab}
+        onChange={setActiveTab}
+        aria-label="לשוניות לוח הבקרה"
+      />
 
       <div className="card">
         {activeTab === 'log' && <LogPanel logs={logs} />}

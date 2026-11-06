@@ -20,7 +20,13 @@
     "react-router-dom": "^6.30.6"
   },
   "overrides": {
-    "react-is": "^18.3.1"
+    "react-is": "$react-is",
+    "@mui/material": {
+      "react-is": "$react-is"
+    },
+    "@mui/utils": {
+      "react-is": "$react-is"
+    }
   },
   "devDependencies": {
     "@testing-library/dom": "10.4.0",

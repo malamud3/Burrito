@@ -5,6 +5,8 @@ import { PHASE_CONFIG } from '../../core/constants/phases';
 import { ActivityPath, Mode, Phase } from '../../core/types/enums';
 import { STUDY_DURATION_SECONDS } from '../../core/constants/study';
 import { formatTime } from '../../core/utils/timeFormatter';
+import AppBadge from '../ui/AppBadge';
+import Chip from '@mui/material/Chip';
 
 function StudyTimer({ startedAt }) {
   const [now, setNow] = useState(Date.now);
@@ -18,7 +20,14 @@ function StudyTimer({ startedAt }) {
   const elapsedSeconds = Math.max(0, Math.floor((now - startedAt) / 1000));
   const seconds = Math.max(0, STUDY_DURATION_SECONDS - elapsedSeconds);
 
-  return <span className="timer" aria-label="זמן נותר">{formatTime(seconds)}</span>;
+  return (
+    <Chip
+      className="timer"
+      size="small"
+      aria-label="זמן נותר"
+      label={formatTime(seconds)}
+    />
+  );
 }
 
 export default function AppHeader() {
@@ -39,13 +48,13 @@ export default function AppHeader() {
         <span>Burrito</span>
       </h1>
       <div className="header-info">
-        <span className="badge badge-phase">{session.studentId}</span>
-        <span className={`badge ${isRenato ? 'badge-renato' : 'badge-classic'}`}>
+        <AppBadge>{session.studentId}</AppBadge>
+        <AppBadge className={`badge ${isRenato ? 'badge-renato' : 'badge-classic'}`}>
           {isRenato ? 'מסלול רנאטו' : 'מסלול קלאסי'}
-        </span>
-        <span className="badge badge-phase">
+        </AppBadge>
+        <AppBadge>
           {phaseConfig?.icon} {phaseConfig?.label}
-        </span>
+        </AppBadge>
         {session.mode === Mode.STUDENT && session.learningStartedAt && !session.learningEndedAt && (
           <StudyTimer startedAt={session.learningStartedAt} />
         )}

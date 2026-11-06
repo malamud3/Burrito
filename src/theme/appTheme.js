@@ -6,36 +6,36 @@ import { createTheme } from '@mui/material/styles';
 export const appTheme = createTheme({
   direction: 'rtl',
   palette: {
-    mode: 'dark',
+    mode: 'light',
     primary: {
-      main: '#6c8cff',
-      dark: '#4a6adb',
+      main: '#55745e',
+      dark: '#435e4b',
       contrastText: '#ffffff',
     },
     secondary: {
-      main: '#a78bfa',
+      main: '#756682',
     },
     success: {
-      main: '#4ade80',
+      main: '#55745e',
     },
     warning: {
-      main: '#fbbf24',
+      main: '#87643b',
     },
     error: {
-      main: '#f87171',
+      main: '#a64f46',
     },
     info: {
-      main: '#38bdf8',
+      main: '#547687',
     },
     background: {
-      default: '#0f1117',
-      paper: '#1a1d27',
+      default: '#eeece3',
+      paper: '#f9f7f0',
     },
     text: {
-      primary: '#e4e6ed',
-      secondary: '#9ba1b0',
+      primary: '#302f2a',
+      secondary: '#68675f',
     },
-    divider: '#363b4a',
+    divider: '#ded9cb',
   },
   shape: {
     borderRadius: 12,

@@ -108,7 +108,12 @@ export function PhaseProvider({ children }) {
   const navigateTo = useCallback((phase) => {
     const path = PHASE_PATHS[phase];
     if (!path) throw new Error(`No route is registered for phase "${phase}"`);
-    navigate(path);
+    navigate(
+      path,
+      phase === Phase.TRANSFER_EXAM
+        ? { state: { fromLearningFlow: true } }
+        : undefined,
+    );
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [navigate]);
 

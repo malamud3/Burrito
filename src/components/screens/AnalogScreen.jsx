@@ -6,6 +6,10 @@ import { useLogger } from '../../hooks/useLogger';
 import { LogActionType } from '../../core/types/enums';
 import ProblemBox from '../problem/ProblemBox';
 import ProgressBar from '../layout/ProgressBar';
+import LearningScreen from '../layout/LearningScreen';
+import AnalogMissingTask from '../analog/AnalogMissingTask';
+import AnalogTaskBanner from '../analog/AnalogTaskBanner';
+import AnalogWorkPanel from '../analog/AnalogWorkPanel';
 
 export default function AnalogScreen() {
   const { session, setAnswer } = useSessionContext();
@@ -36,79 +40,26 @@ export default function AnalogScreen() {
 
   if (!task) {
     return (
-      <div className="container learning-screen analog-screen">
-        <div className="card" style={{ textAlign: 'center', padding: 40 }}>
-          <p>שגיאה: לא נבחרה משימת תמיכה.</p>
-          <div className="btn-group" style={{ justifyContent: 'center', marginTop: 16 }}>
-            <button className="btn btn-outline" onClick={goToSolving}>
-              חזרה לפתרון
-            </button>
-          </div>
-        </div>
-      </div>
+      <LearningScreen className="analog-screen">
+        <AnalogMissingTask onBack={goToSolving} />
+      </LearningScreen>
     );
   }
 
   return (
-    <div className="container learning-screen analog-screen">
+    <LearningScreen className="analog-screen">
       <ProgressBar />
-
-      <div className="analog-banner">
-        <h3>🔄 משימת תמיכה</h3>
-        <p style={{ color: 'var(--text2)' }}>
-          הבעיה הבאה בהקשר אחר. נסה/י לפתור אותה — היא עשויה לעזור לך אחר כך.
-        </p>
-      </div>
-
+      <AnalogTaskBanner />
       <ProblemBox
         label={task.label}
         text={task.text}
         question={task.question}
       />
-
-      <div className="ct-tool">
-        <div className="ct-tool-header">
-          <div className="ct-tool-title">
-            <span>🛠️ פתרון המשימה</span>
-          </div>
-        </div>
-
-        <div className="field">
-          <label>פרק/י את המשימה לשלבים</label>
-          <textarea
-            value={session.answers.analogDecomp}
-            onChange={(e) => setAnswer('analogDecomp', e.target.value)}
-            rows={3}
-            placeholder="שלב 1: ... שלב 2: ..."
-          />
-        </div>
-
-        <div className="field">
-          <label>מה הנתונים החשובים?</label>
-          <textarea
-            value={session.answers.analogAbstract}
-            onChange={(e) => setAnswer('analogAbstract', e.target.value)}
-            rows={2}
-            placeholder="הנתונים הרלוונטיים הם..."
-          />
-        </div>
-
-        <div className="field">
-          <label>הפתרון שלך</label>
-          <textarea
-            value={session.answers.analogAnswer}
-            onChange={(e) => setAnswer('analogAnswer', e.target.value)}
-            rows={3}
-            placeholder="כתוב/י את הפתרון..."
-          />
-        </div>
-
-        <div className="btn-group" style={{ justifyContent: 'center' }}>
-          <button className="btn btn-success" onClick={handleSubmit}>
-            סיימתי את המשימה — חזרה לבעיה ←
-          </button>
-        </div>
-      </div>
-    </div>
+      <AnalogWorkPanel
+        answers={session.answers}
+        onAnswerChange={setAnswer}
+        onSubmit={handleSubmit}
+      />
+    </LearningScreen>
   );
 }

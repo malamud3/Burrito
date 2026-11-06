@@ -2078,6 +2078,14 @@ label { margin-bottom: 7px; color: #494840; font-size: 0.9rem; font-weight: 600;
     background: linear-gradient(145deg, #faf8f2 0%, #f0f2e9 100%);
 }
 .learning-screen .analog-banner h3 { color: #405e49; }
+.learning-screen .analog-banner p { color: var(--text2); }
+.learning-screen .analog-actions,
+.learning-screen .analog-missing-actions { justify-content: center; }
+.learning-screen .analog-missing-state {
+    padding: 40px;
+    text-align: center;
+}
+.learning-screen .analog-missing-actions { margin-top: 16px; }
 .learning-screen .ct-tool {
     padding: 22px;
     background: #f9f7f0;

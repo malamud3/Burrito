@@ -6,8 +6,14 @@ import { usePhaseNavigation } from '../../hooks/usePhaseNavigation';
 import { useLogger } from '../../hooks/useLogger';
 import { ActivityPath, LogActionType, Mode } from '../../core/types/enums';
 import { FUNCTION_ASSESSMENT_QUESTIONS, PRE_ASSESSMENT_FUNCTION } from '../../core/constants/functionAssessments';
-import { STUDY_DURATION_MINUTES } from '../../core/constants/study';
-import { assignDemoStudyPath } from '../../services/StudyAllocationService';
+import {
+  AUTO_ASSIGN_STUDY_PATH,
+  STUDY_DURATION_MINUTES,
+} from '../../core/constants/study';
+import {
+  assignChosenStudyPath,
+  assignDemoStudyPath,
+} from '../../services/StudyAllocationService';
 import ProgressBar from '../layout/ProgressBar';
 import FunctionFraction from '../math/FunctionFraction';
 
@@ -55,9 +61,11 @@ export default function PreAssessmentScreen() {
 
     let assignment;
     try {
-      const result = assignDemoStudyPath(session.studentId);
+      const result = AUTO_ASSIGN_STUDY_PATH
+        ? assignDemoStudyPath(session.studentId)
+        : assignChosenStudyPath(session.studentId, session.activityPath);
       if (result.duplicate) {
-        show('קוד המשתתף/ת כבר הוקצה בדפדפן זה. לא ניתן להתחיל הדגמה נוספת.', '⚠️');
+        show('קוד המשתתף/ת כבר הוקצה בדפדפן זה. לא ניתן להתחיל פעילות נוספת.', '⚠️');
         return;
       }
       assignment = result.assignment;

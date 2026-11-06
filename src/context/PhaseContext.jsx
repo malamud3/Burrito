@@ -13,7 +13,7 @@ import React, {
   useRef,
 } from 'react';
 import { ActivityPath, LogActionType, Phase } from '../core/types/enums';
-import { PHASE_ORDER } from '../core/constants/phases';
+import { getNextPhase } from '../core/constants/phases';
 import { getPhaseFromPath, PHASE_PATHS } from '../core/constants/routes';
 import { useSessionContext } from './SessionContext';
 import { useLogContext } from './LogContext';
@@ -109,11 +109,9 @@ export function PhaseProvider({ children }) {
   }, [navigate]);
 
   const navigateNext = useCallback(() => {
-    const index = PHASE_ORDER.indexOf(currentPhase);
-    if (index >= 0 && index < PHASE_ORDER.length - 1) {
-      navigateTo(PHASE_ORDER[index + 1]);
-    }
-  }, [currentPhase, navigateTo]);
+    const nextPhase = getNextPhase(currentPhase, session.activityPath);
+    if (nextPhase) navigateTo(nextPhase);
+  }, [currentPhase, session.activityPath, navigateTo]);
 
   const resetPhase = useCallback(() => {
     setCurrentPhase(Phase.LOGIN);

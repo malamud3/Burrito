@@ -87,6 +87,32 @@ export function assignDemoStudyPath(
   return { duplicate: false, assignment };
 }
 
+export function assignChosenStudyPath(
+  participantId,
+  activityPath,
+  storage = window.localStorage,
+) {
+  const normalizedId = normalizeParticipantId(participantId);
+  if (!normalizedId) throw new Error('נדרש קוד משתתף/ת להקצאה.');
+  if (!STUDY_PATHS.includes(activityPath)) {
+    throw new Error('יש לבחור מסלול למידה תקין.');
+  }
+
+  const state = readAllocationState(storage);
+  const existing = state.participants[normalizedId];
+  if (existing) return { duplicate: true, assignment: existing };
+
+  const assignment = {
+    activityPath,
+    method: 'student_choice',
+    chosenAt: Date.now(),
+  };
+  state.participants[normalizedId] = assignment;
+  storage.setItem(ALLOCATION_STORAGE_KEY, JSON.stringify(state));
+
+  return { duplicate: false, assignment };
+}
+
 export function isParticipantAlreadyAssigned(participantId, storage = window.localStorage) {
   const normalizedId = normalizeParticipantId(participantId);
   if (!normalizedId) return false;

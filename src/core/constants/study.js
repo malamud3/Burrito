@@ -3,6 +3,7 @@ import { ActivityPath } from '../types/enums';
 export const STUDY_DURATION_SECONDS = 30 * 60;
 export const STUDY_DURATION_MINUTES = STUDY_DURATION_SECONDS / 60;
 export const ALLOCATION_STORAGE_KEY = 'ctAdapt.allocation';
+export const AUTO_ASSIGN_STUDY_PATH = false;
 
 export const STUDY_HINTS = Object.freeze({
   domain: [

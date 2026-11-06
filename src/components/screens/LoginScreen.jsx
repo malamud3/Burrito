@@ -3,13 +3,17 @@ import { useSessionContext } from '../../context/SessionContext';
 import { useLogContext } from '../../context/LogContext';
 import { useNotification } from '../../context/NotificationContext';
 import { usePhaseNavigation } from '../../hooks/usePhaseNavigation';
-import { LogActionType, Mode } from '../../core/types/enums';
-import { STUDY_DURATION_MINUTES } from '../../core/constants/study';
+import { ActivityPath, LogActionType, Mode } from '../../core/types/enums';
+import {
+  AUTO_ASSIGN_STUDY_PATH,
+  STUDY_DURATION_MINUTES,
+} from '../../core/constants/study';
 import { isParticipantAlreadyAssigned } from '../../services/StudyAllocationService';
 
 export default function LoginScreen() {
   const [studentId, setStudentId] = useState('');
   const [mode, setMode] = useState(Mode.STUDENT);
+  const [activityPath, setActivityPath] = useState(ActivityPath.CLASSIC);
   const { initSession } = useSessionContext();
   const { addLog } = useLogContext();
   const { goToPreAssessment, goToDashboard } = usePhaseNavigation();
@@ -28,7 +32,12 @@ export default function LoginScreen() {
       }
     }
 
-    const sessionId = initSession(participantId, null, mode, null);
+    const sessionId = initSession(
+      participantId,
+      mode === Mode.STUDENT && !AUTO_ASSIGN_STUDY_PATH ? activityPath : null,
+      mode,
+      null,
+    );
 
     if (mode === Mode.RESEARCHER) {
       addLog(LogActionType.ACTIVITY_START, {
@@ -66,7 +75,7 @@ export default function LoginScreen() {
             <div className="login-feature">
               <span>01</span>
               <strong>מקבלים מסלול</strong>
-              <small>הקצאה אקראית בהדגמה</small>
+              <small>בחירה בין שני מסלולים</small>
             </div>
             <div className="login-feature">
               <span>02</span>
@@ -91,7 +100,7 @@ export default function LoginScreen() {
             <h2 id="login-form-title">מתחילים כאן</h2>
           </div>
           <p className="login-subtitle">
-            הזינו קוד כדי להתחיל. במסלול ההדגמה התנאי ייקבע אוטומטית לאחר הבוחן המקדים.
+            הזינו קוד ובחרו מסלול למידה. לאחר הבוחן המקדים תתחיל הפעילות במסלול שבחרתם.
           </p>
 
           <div className="field login-field">
@@ -114,11 +123,25 @@ export default function LoginScreen() {
             </select>
           </div>
 
+          {mode === Mode.STUDENT && !AUTO_ASSIGN_STUDY_PATH && (
+            <div className="field login-field">
+              <label htmlFor="activity-path">מסלול למידה</label>
+              <select
+                id="activity-path"
+                value={activityPath}
+                onChange={(event) => setActivityPath(event.target.value)}
+              >
+                <option value={ActivityPath.CLASSIC}>מסלול קלאסי</option>
+                <option value={ActivityPath.RENATO}>מסלול רנאטו</option>
+              </select>
+            </div>
+          )}
+
           {mode === Mode.STUDENT && (
             <div className="login-research-notice" role="note">
               <strong>מהלך ההדגמה</strong>
               <span>
-                תחילה יוגש בוחן מקדים. אחריו ייקבע מסלול באופן אקראי, ויתחיל
+                תחילה יוגש בוחן מקדים. אחריו יתחיל
                 טיימר למידה של {STUDY_DURATION_MINUTES} דקות.
               </span>
               <span>

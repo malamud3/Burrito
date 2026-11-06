@@ -54,8 +54,7 @@ function PhaseRoute({ phase, Screen }) {
   }
   if (
     isLearningPhase &&
-    !session.learningStartedAt &&
-    (!session.activityPath || session.allocation?.method === 'demo_local_permuted_blocks')
+    !session.learningStartedAt
   ) {
     return <Navigate to={PHASE_PATHS[Phase.PRE_ASSESSMENT]} replace />;
   }

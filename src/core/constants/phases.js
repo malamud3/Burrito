@@ -2,7 +2,7 @@
 // src/core/constants/phases.js
 // ============================================================
 
-import { Phase } from '../types/enums';
+import { ActivityPath, Phase } from '../types/enums';
 
 export const PHASE_CONFIG = {
   [Phase.LOGIN]: { label: 'כניסה', progress: 0, icon: '🔑' },
@@ -29,19 +29,34 @@ export const PHASE_CONFIG = {
   [Phase.DASHBOARD]: { label: 'לוח בקרה', progress: 100, icon: '📋' },
 };
 
-export const PHASE_ORDER = [
-  Phase.LOGIN,
-  Phase.PRE_ASSESSMENT,
-  Phase.CLASSIC,
-  Phase.CLASSIC_EXTREMA,
-  Phase.CLASSIC_ASYMPTOTES,
-  Phase.CLASSIC_INTERCEPTS,
-  Phase.CLASSIC_GRAPH,
-  Phase.RENATO,
-  Phase.RENATO_EXTREMA,
-  Phase.RENATO_ASYMPTOTES,
-  Phase.RENATO_INTERCEPTS,
-  Phase.RENATO_GRAPH,
-  Phase.TRANSFER_EXAM,
-  Phase.COMPLETION,
-];
+const LEARNING_PHASES = {
+  [ActivityPath.CLASSIC]: [
+    Phase.CLASSIC,
+    Phase.CLASSIC_EXTREMA,
+    Phase.CLASSIC_ASYMPTOTES,
+    Phase.CLASSIC_INTERCEPTS,
+    Phase.CLASSIC_GRAPH,
+  ],
+  [ActivityPath.RENATO]: [
+    Phase.RENATO,
+    Phase.RENATO_EXTREMA,
+    Phase.RENATO_ASYMPTOTES,
+    Phase.RENATO_INTERCEPTS,
+    Phase.RENATO_GRAPH,
+  ],
+};
+
+export function getNextPhase(currentPhase, activityPath) {
+  if (currentPhase === Phase.LOGIN) return Phase.PRE_ASSESSMENT;
+  if (currentPhase === Phase.PRE_ASSESSMENT) {
+    return LEARNING_PHASES[activityPath]?.[0] || null;
+  }
+  if (currentPhase === Phase.TRANSFER_EXAM) return Phase.COMPLETION;
+
+  const learningPhases = LEARNING_PHASES[activityPath];
+  if (!learningPhases) return null;
+
+  const phaseIndex = learningPhases.indexOf(currentPhase);
+  if (phaseIndex < 0) return null;
+  return learningPhases[phaseIndex + 1] || Phase.TRANSFER_EXAM;
+}

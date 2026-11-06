@@ -1,6 +1,9 @@
 import { ActivityPath } from '../src/core/types/enums';
 import { ALLOCATION_STORAGE_KEY } from '../src/core/constants/study';
-import { assignDemoStudyPath } from '../src/services/StudyAllocationService';
+import {
+  assignChosenStudyPath,
+  assignDemoStudyPath,
+} from '../src/services/StudyAllocationService';
 
 beforeEach(() => {
   localStorage.clear();
@@ -36,6 +39,25 @@ test('a participant code cannot be assigned twice in the same browser', () => {
   expect(duplicate.duplicate).toBe(true);
   expect(duplicate.assignment).toEqual(first.assignment);
   expect(stored.participants.S01).toEqual(first.assignment);
+});
+
+test('records the path selected by a participant without advancing automatic allocation', () => {
+  const result = assignChosenStudyPath('P01', ActivityPath.RENATO, localStorage);
+  const stored = JSON.parse(localStorage.getItem(ALLOCATION_STORAGE_KEY));
+
+  expect(result.assignment).toMatchObject({
+    activityPath: ActivityPath.RENATO,
+    method: 'student_choice',
+    chosenAt: expect.any(Number),
+  });
+  expect(stored.participants.P01).toEqual(result.assignment);
+  expect(stored.nextIndex).toBe(0);
+});
+
+test('rejects an invalid selected path', () => {
+  expect(() => assignChosenStudyPath('P01', 'unknown', localStorage))
+    .toThrow('יש לבחור מסלול למידה תקין');
+  expect(localStorage.getItem(ALLOCATION_STORAGE_KEY)).toBeNull();
 });
 
 test('rejects an empty participant code without writing assignment data', () => {

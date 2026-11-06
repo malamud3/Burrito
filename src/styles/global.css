@@ -1510,6 +1510,7 @@ label { margin-bottom: 7px; color: #494840; font-size: 0.9rem; font-weight: 600;
     font-size: 0.82rem;
     line-height: 1.55;
 }
+.function-process-task .field { margin: 0; }
 .function-process-task textarea {
     width: 100%;
     min-height: 58px;

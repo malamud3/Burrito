@@ -5,9 +5,8 @@ import ScreenCard from '../layout/ScreenCard';
 import ActionButton from '../ui/ActionButton';
 import FunctionFraction from '../math/FunctionFraction';
 import FunctionGraph from '../math/FunctionGraph';
-import FunctionStudyStep, {
-  FunctionStudyNavigation,
-} from '../screens/FunctionStudyStep';
+import FunctionStudyNavigation from '../study/FunctionStudyNavigation';
+import FunctionStudyStep from '../study/FunctionStudyStepCard';
 
 export default function ClassicLearningView({
   studyDurationMinutes,

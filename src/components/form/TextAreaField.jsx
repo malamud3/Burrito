@@ -9,6 +9,7 @@ export default function TextAreaField({
   placeholder,
   dir,
   ariaLabel,
+  labelClassName = '',
   className = '',
   ...props
 }) {
@@ -16,7 +17,11 @@ export default function TextAreaField({
 
   return (
     <div className={classes}>
-      {label && <label htmlFor={id}>{label}</label>}
+      {label && (
+        <label className={labelClassName} htmlFor={id}>
+          {label}
+        </label>
+      )}
       <textarea
         id={id}
         rows={rows}

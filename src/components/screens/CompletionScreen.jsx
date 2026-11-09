@@ -5,7 +5,7 @@ import { usePhaseNavigation } from '../../hooks/usePhaseNavigation';
 import { useLogExport } from '../../hooks/useLogExport';
 import { computeSessionSummary } from '../../services/LogAnalyticsService';
 import { formatTime } from '../../core/utils/timeFormatter';
-import { ActivityPath } from '../../core/types/enums';
+import { ActivityPath, Mode } from '../../core/types/enums';
 import CompletionView from '../completion/CompletionView';
 
 export default function CompletionScreen() {
@@ -33,6 +33,7 @@ export default function CompletionScreen() {
       rows={rows}
       onDashboard={goToDashboard}
       onExport={exportJSON}
+      canAccessDashboard={session.mode === Mode.RESEARCHER}
     />
   );
 }

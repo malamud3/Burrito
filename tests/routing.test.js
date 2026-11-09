@@ -3,7 +3,7 @@ import { SCREEN_REGISTRY } from '../src/app/screenRegistry';
 import { getPhaseFromPath, PHASE_PATHS } from '../src/core/constants/routes';
 import { getNextPhase } from '../src/core/constants/phases';
 import { getPhaseRedirect } from '../src/app/routeGuards';
-import { ActivityPath, Mode, Phase } from '../src/core/types/enums';
+import { ActivityPath, LogActionType, Mode, Phase } from '../src/core/types/enums';
 
 describe('routing configuration', () => {
   test('every registered screen has a unique, reversible route', () => {
@@ -63,5 +63,52 @@ describe('routing configuration', () => {
       isTransferNavigation: true,
       now: 1001,
     })).toBeNull();
+  });
+
+  test('allows transfer assessment after learning completion is restored', () => {
+    const session = {
+      isActive: true,
+      mode: Mode.STUDENT,
+      activityPath: ActivityPath.CLASSIC,
+      learningStartedAt: 1000,
+      learningEndedAt: 2000,
+    };
+
+    expect(getPhaseRedirect({
+      phase: Phase.TRANSFER_EXAM,
+      session,
+      logs: [],
+      now: 3000,
+    })).toBeNull();
+  });
+
+  test('redirects students away from the researcher dashboard', () => {
+    expect(getPhaseRedirect({
+      phase: Phase.DASHBOARD,
+      session: {
+        isActive: true,
+        mode: Mode.STUDENT,
+        activityPath: ActivityPath.CLASSIC,
+      },
+      logs: [],
+    })).toBe(PHASE_PATHS[Phase.COMPLETION]);
+  });
+
+  test('does not reopen a submitted transfer assessment', () => {
+    expect(getPhaseRedirect({
+      phase: Phase.TRANSFER_EXAM,
+      session: {
+        isActive: true,
+        mode: Mode.STUDENT,
+        activityPath: ActivityPath.CLASSIC,
+        learningStartedAt: 1000,
+        learningEndedAt: 2000,
+        sessionId: 'session-1',
+      },
+      logs: [{
+        actionType: LogActionType.TRANSFER_SUBMIT,
+        data: { sessionId: 'session-1', assessment: {} },
+      }],
+    })).toBe(PHASE_PATHS[Phase.COMPLETION]);
   });
 });

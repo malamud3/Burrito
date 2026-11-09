@@ -61,6 +61,9 @@ export function getPhaseRedirect({
   ) {
     return PHASE_PATHS[Phase.DASHBOARD];
   }
+  if (phase === Phase.DASHBOARD && session.mode !== Mode.RESEARCHER) {
+    return PHASE_PATHS[Phase.COMPLETION];
+  }
   if (phase === Phase.PRE_ASSESSMENT && session.learningStartedAt) {
     return learningPath;
   }
@@ -69,6 +72,12 @@ export function getPhaseRedirect({
   }
   if (learningPhase && (timeLimitReached || session.learningEndedAt)) {
     return PHASE_PATHS[Phase.TRANSFER_EXAM];
+  }
+  if (
+    phase === Phase.TRANSFER_EXAM &&
+    hasTransferSubmission(logs, session.sessionId)
+  ) {
+    return PHASE_PATHS[Phase.COMPLETION];
   }
   if (
     phase === Phase.TRANSFER_EXAM &&

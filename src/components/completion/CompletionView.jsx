@@ -6,7 +6,7 @@ import ScreenActions from '../layout/ScreenActions';
 import ActionButton from '../ui/ActionButton';
 import CompletionSummary from './CompletionSummary';
 
-export default function CompletionView({ rows, onDashboard, onExport }) {
+export default function CompletionView({ rows, onDashboard, onExport, canAccessDashboard }) {
   return (
     <LearningScreen className="completion-screen">
       <ProgressBar />
@@ -20,9 +20,11 @@ export default function CompletionView({ rows, onDashboard, onExport }) {
         </p>
         <CompletionSummary rows={rows} />
         <ScreenActions centered className="completion-actions">
-          <ActionButton tone="outline" onClick={onDashboard}>
-            📊 צפייה בנתונים (חוקר/ת)
-          </ActionButton>
+          {canAccessDashboard && (
+            <ActionButton tone="outline" onClick={onDashboard}>
+              📊 צפייה בנתונים (חוקר/ת)
+            </ActionButton>
+          )}
           <ActionButton tone="outline" onClick={onExport}>
             ⬇️ הורדת לוגים
           </ActionButton>

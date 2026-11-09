@@ -38,7 +38,10 @@ export function getAssessmentScoringRecords(logs) {
 
     const assessmentType = SUBMISSION_TYPES[entry.actionType];
     if (assessmentType && entry.data?.assessment) {
-      submissions.set(recordKey(sessionId, assessmentType), entry);
+      const key = recordKey(sessionId, assessmentType);
+      if (!submissions.has(key)) {
+        submissions.set(key, entry);
+      }
     }
 
     if (entry.actionType === LogActionType.ASSESSMENT_SCORE &&

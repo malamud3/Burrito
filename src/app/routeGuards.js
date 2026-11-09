@@ -61,13 +61,6 @@ export function getPhaseRedirect({
   ) {
     return PHASE_PATHS[Phase.DASHBOARD];
   }
-  if (
-    phase === Phase.TRANSFER_EXAM &&
-    !isTransferNavigation &&
-    (session.learningEndedAt || timeLimitReached)
-  ) {
-    return PHASE_PATHS[Phase.LOGIN];
-  }
   if (phase === Phase.PRE_ASSESSMENT && session.learningStartedAt) {
     return learningPath;
   }
@@ -88,7 +81,8 @@ export function getPhaseRedirect({
     phase === Phase.TRANSFER_EXAM &&
     session.learningStartedAt &&
     !session.learningEndedAt &&
-    !timeLimitReached
+    !timeLimitReached &&
+    !isTransferNavigation
   ) {
     return learningPath;
   }

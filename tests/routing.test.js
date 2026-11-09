@@ -2,7 +2,8 @@ import { describe, expect, test } from 'vitest';
 import { SCREEN_REGISTRY } from '../src/app/screenRegistry';
 import { getPhaseFromPath, PHASE_PATHS } from '../src/core/constants/routes';
 import { getNextPhase } from '../src/core/constants/phases';
-import { ActivityPath, Phase } from '../src/core/types/enums';
+import { getPhaseRedirect } from '../src/app/routeGuards';
+import { ActivityPath, Mode, Phase } from '../src/core/types/enums';
 
 describe('routing configuration', () => {
   test('every registered screen has a unique, reversible route', () => {
@@ -44,5 +45,23 @@ describe('routing configuration', () => {
 
   test('does not guess a learning path before allocation', () => {
     expect(getNextPhase(Phase.PRE_ASSESSMENT, null)).toBeNull();
+  });
+
+  test('allows in-flow transfer navigation before learning end is persisted', () => {
+    const session = {
+      isActive: true,
+      mode: Mode.STUDENT,
+      activityPath: ActivityPath.CLASSIC,
+      learningStartedAt: 1000,
+      learningEndedAt: null,
+    };
+
+    expect(getPhaseRedirect({
+      phase: Phase.TRANSFER_EXAM,
+      session,
+      logs: [],
+      isTransferNavigation: true,
+      now: 1001,
+    })).toBeNull();
   });
 });

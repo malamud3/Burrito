@@ -6,11 +6,6 @@
 export const Phase = Object.freeze({
   LOGIN: 'login',
   PRE_ASSESSMENT: 'pre-assessment',
-  CLASSIC: 'classic',
-  CLASSIC_EXTREMA: 'classic-extrema',
-  CLASSIC_ASYMPTOTES: 'classic-asymptotes',
-  CLASSIC_INTERCEPTS: 'classic-intercepts',
-  CLASSIC_GRAPH: 'classic-graph',
   PROBLEM: 'problem',
   SOLVING: 'solving',
   DIFFICULTY: 'difficulty',
@@ -29,7 +24,6 @@ export const Phase = Object.freeze({
 });
 
 export const ActivityPath = Object.freeze({
-  CLASSIC: 'classic',
   RENATO: 'renato',
 });
 
@@ -46,7 +40,10 @@ export const Mode = Object.freeze({
 export const CTSkill = Object.freeze({
   DECOMPOSITION: 'decomposition',
   ABSTRACTION: 'abstraction',
+  PATTERN_RECOGNITION: 'pattern_recognition',
   ALGORITHMIC: 'algorithmic',
+  DEBUGGING: 'debugging',
+  SELF_REGULATION: 'self_regulation',
 });
 
 export const ToolStatus = Object.freeze({

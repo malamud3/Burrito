@@ -1,14 +1,6 @@
-import { ActivityPath, LogActionType, Mode, Phase } from '../core/types/enums';
+import { LogActionType, Mode, Phase } from '../core/types/enums';
 import { STUDY_DURATION_SECONDS } from '../core/constants/study';
 import { PHASE_PATHS } from '../core/constants/routes';
-
-export const CLASSIC_PHASES = new Set([
-  Phase.CLASSIC,
-  Phase.CLASSIC_EXTREMA,
-  Phase.CLASSIC_ASYMPTOTES,
-  Phase.CLASSIC_INTERCEPTS,
-  Phase.CLASSIC_GRAPH,
-]);
 
 export const RENATO_PHASES = new Set([
   Phase.RENATO,
@@ -19,13 +11,7 @@ export const RENATO_PHASES = new Set([
 ]);
 
 export function isLearningPhase(phase) {
-  return CLASSIC_PHASES.has(phase) || RENATO_PHASES.has(phase);
-}
-
-function getLearningPath(activityPath) {
-  return activityPath === ActivityPath.RENATO
-    ? PHASE_PATHS[Phase.RENATO]
-    : PHASE_PATHS[Phase.CLASSIC];
+  return RENATO_PHASES.has(phase);
 }
 
 function hasTransferSubmission(logs, sessionId) {
@@ -48,7 +34,7 @@ export function getPhaseRedirect({
     session.mode === Mode.STUDENT &&
     session.learningStartedAt &&
     now - session.learningStartedAt >= STUDY_DURATION_SECONDS * 1000;
-  const learningPath = getLearningPath(session.activityPath);
+  const learningPath = PHASE_PATHS[Phase.RENATO];
 
   if (phase !== Phase.LOGIN && !session.isActive) {
     return PHASE_PATHS[Phase.LOGIN];
@@ -101,12 +87,5 @@ export function getPhaseRedirect({
   ) {
     return PHASE_PATHS[Phase.TRANSFER_EXAM];
   }
-  if (RENATO_PHASES.has(phase) && session.activityPath !== ActivityPath.RENATO) {
-    return PHASE_PATHS[Phase.CLASSIC];
-  }
-  if (CLASSIC_PHASES.has(phase) && session.activityPath !== ActivityPath.CLASSIC) {
-    return PHASE_PATHS[Phase.RENATO];
-  }
-
   return null;
 }

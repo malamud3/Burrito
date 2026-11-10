@@ -4,28 +4,20 @@ import { useLogContext } from '../../context/LogContext';
 import { useNotification } from '../../context/NotificationContext';
 import { usePhaseNavigation } from '../../hooks/usePhaseNavigation';
 import { useLogger } from '../../hooks/useLogger';
-import { ActivityPath, LogActionType, Mode } from '../../core/types/enums';
+import { LogActionType, Mode } from '../../core/types/enums';
 import { FUNCTION_ASSESSMENT_QUESTIONS, PRE_ASSESSMENT_FUNCTION } from '../../core/constants/functionAssessments';
-import {
-  AUTO_ASSIGN_STUDY_PATH,
-  STUDY_DURATION_MINUTES,
-} from '../../core/constants/study';
-import {
-  assignChosenStudyPath,
-  assignDemoStudyPath,
-} from '../../services/StudyAllocationService';
+import { STUDY_DURATION_MINUTES } from '../../core/constants/study';
 import FunctionAssessmentView from '../assessment/FunctionAssessmentView';
 
 export default function PreAssessmentScreen() {
   const {
     session,
-    assignStudyPath,
     updatePreAssessment,
     startLearning,
   } = useSessionContext();
   const { logs, addLog } = useLogContext();
   const { log } = useLogger();
-  const { goToClassic, goToRenato } = usePhaseNavigation();
+  const { goToRenato } = usePhaseNavigation();
   const { show } = useNotification();
   const answers = session.preAssessment;
   const isComplete = FUNCTION_ASSESSMENT_QUESTIONS.every(({ key }) => answers[key].trim());
@@ -58,23 +50,6 @@ export default function PreAssessmentScreen() {
       return;
     }
 
-    let assignment;
-    try {
-      const result = AUTO_ASSIGN_STUDY_PATH
-        ? assignDemoStudyPath(session.studentId)
-        : assignChosenStudyPath(session.studentId, session.activityPath);
-      if (result.duplicate) {
-        show('קוד המשתתף/ת כבר הוקצה בדפדפן זה. לא ניתן להתחיל פעילות נוספת.', '⚠️');
-        return;
-      }
-      assignment = result.assignment;
-    } catch (error) {
-      show(error.message || 'לא ניתן לבצע הקצאה להדגמה.', '⚠️');
-      return;
-    }
-
-    const { activityPath, ...allocation } = assignment;
-    assignStudyPath(activityPath, allocation);
     log(LogActionType.PRE_ASSESSMENT_SUBMIT, {
       schemaVersion: 1,
       functionExpression: PRE_ASSESSMENT_FUNCTION.expression,
@@ -84,21 +59,19 @@ export default function PreAssessmentScreen() {
       schemaVersion: 1,
       studentId: session.studentId,
       sessionId: session.sessionId,
-      activityPath,
+      activityPath: session.activityPath,
       mode: Mode.STUDENT,
-      ...assignment,
       studyDurationMinutes: STUDY_DURATION_MINUTES,
     });
     const startedAt = startLearning();
     addLog(LogActionType.LEARNING_START, {
       studentId: session.studentId,
       sessionId: session.sessionId,
-      activityPath,
+      activityPath: session.activityPath,
       startedAt,
       durationLimitMinutes: STUDY_DURATION_MINUTES,
     });
-    if (activityPath === ActivityPath.RENATO) goToRenato();
-    else goToClassic();
+    goToRenato();
   };
 
   return (

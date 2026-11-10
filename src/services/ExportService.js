@@ -75,7 +75,6 @@ export function logsToJSON(logs, session) {
         allocation: session.allocation,
         preAssessment: session.preAssessment,
         studyPrompts: session.studyPrompts,
-        classicWork: session.classicWork,
         renatoWork: session.renatoWork,
         graphWork: session.graphWork,
         transferAssessment: session.transferAssessment,
@@ -92,9 +91,17 @@ export function logsToJSON(logs, session) {
 const csvEscape = (value) => `"${String(value ?? '').replace(/"/g, '""')}"`;
 
 export function logsToCSV(logs) {
-  const header = ['id', 'isoTime', 'timestamp', 'actionType', 'skill', 'data'];
+  const header = ['id', 'isoTime', 'timestamp', 'actionType', 'skill', 'ctTags', 'data'];
   const rows = logs.map((l) =>
-    [l.id, l.isoTime, l.timestamp, l.actionType, l.skill || '', JSON.stringify(l.data)]
+    [
+      l.id,
+      l.isoTime,
+      l.timestamp,
+      l.actionType,
+      l.skill || '',
+      (l.ctTags || []).join('|'),
+      JSON.stringify(l.data),
+    ]
       .map(csvEscape)
       .join(','),
   );

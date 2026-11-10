@@ -12,6 +12,7 @@ const emptySummary = () => ({
   totalDurationSeconds: 0,
   actionsByType: {},
   actionsBySkill: {},
+  tagsByType: {},
   hintRequests: 0,
   hintEscalations: 0,
   editsPerSkill: {},
@@ -31,6 +32,13 @@ export function computeSessionSummary(logs) {
   });
   const ofType = (type) => logs.filter((l) => l.actionType === type);
 
+  const tagsByType = {};
+  logs.forEach((entry) => {
+    (entry.ctTags || []).forEach((tag) => {
+      tagsByType[tag] = (tagsByType[tag] || 0) + 1;
+    });
+  });
+
   return {
     totalActions: logs.length,
     totalDurationSeconds: Array.from(sessionTimes.values()).reduce(
@@ -42,6 +50,7 @@ export function computeSessionSummary(logs) {
       logs.filter((l) => l.skill),
       'skill',
     ),
+    tagsByType,
     hintRequests: ofType(LogActionType.HINT_REQUEST).length,
     hintEscalations: ofType(LogActionType.HINT_ESCALATION).length,
     editsPerSkill: Object.values(CTSkill).reduce((acc, skill) => {

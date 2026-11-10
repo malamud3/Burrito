@@ -30,19 +30,14 @@ export function SessionProvider({ children }) {
 
   const actions = useMemo(
     () => ({
-      initSession: (studentId, activityPath, mode, allocation = null) => {
+      initSession: (studentId, _activityPath, mode, allocation = null) => {
         const sessionId = generateId('session');
         dispatch({
           type: 'INIT_SESSION',
-          payload: { studentId, sessionId, activityPath, mode, allocation },
+          payload: { studentId, sessionId, activityPath: 'renato', mode, allocation },
         });
         return sessionId;
       },
-      assignStudyPath: (activityPath, allocation) =>
-        dispatch({
-          type: 'ASSIGN_STUDY_PATH',
-          payload: { activityPath, allocation },
-        }),
       setAnswer: (key, value) =>
         dispatch({ type: 'SET_ANSWER', payload: { key, value } }),
       setDetectedDifficulty: (difficulty) =>
@@ -59,8 +54,6 @@ export function SessionProvider({ children }) {
         dispatch({ type: 'UPDATE_ALGO_NODES', payload: nodes }),
       updateRenatoWork: (patch) =>
         dispatch({ type: 'UPDATE_RENATO_WORK', payload: patch }),
-      updateClassicWork: (patch) =>
-        dispatch({ type: 'UPDATE_CLASSIC_WORK', payload: patch }),
       updateTransferAssessment: (patch) =>
         dispatch({ type: 'UPDATE_TRANSFER_ASSESSMENT', payload: patch }),
       updateGraphWork: (patch) =>

@@ -750,7 +750,6 @@ h1, h2, h3, p { text-wrap: pretty; }
 .badge-fixed { background: #f1e8d8; color: #755631; border-color: #e5d8c1; }
 .badge-phase { background: #efede5; color: #5f5d55; border-color: #e2ded2; }
 .badge-renato { background: #e6ede3; color: #405e49; border-color: #d4dfd1; }
-.badge-classic { background: #f1e8d8; color: #755631; border-color: #e5d8c1; }
 .timer {
     padding: 5px 10px;
     border: 1px solid var(--border);

@@ -1,13 +1,13 @@
-import { ActivityPath, Mode } from '../types/enums';
+import { ActivityPath, Group, Mode } from '../types/enums';
 import { RENATO_FUNCTION } from '../constants/renato';
 import { createEmptyFunctionAssessment } from '../constants/functionAssessments';
 
 export const createInitialSessionState = () => ({
   studentId: '',
   sessionId: null,
-  group: null,
+  group: Group.ADAPTIVE,
   mode: Mode.STUDENT,
-  activityPath: ActivityPath.CLASSIC,
+  activityPath: ActivityPath.RENATO,
   allocation: null,
   isActive: false,
   startTime: null,
@@ -32,18 +32,6 @@ export const createInitialSessionState = () => ({
     analogDecomp: '',
     analogAbstract: '',
     analogAnswer: '',
-  },
-  classicWork: {
-    domain: '',
-    derivative: '',
-    criticalPoints: '',
-    extremaPoints: '',
-    verticalAsymptotes: '',
-    horizontalAsymptote: '',
-    yAxisIntercept: '',
-    xAxisIntercept: '',
-    signBehavior: '',
-    graph: '',
   },
   transferAssessment: {
     domain: '',
@@ -109,13 +97,7 @@ export function normalizeSessionState(parsed) {
     ...initial,
     ...parsed,
     sessionId: parsed.sessionId || `session_${parsed.startTime || Date.now()}`,
-    activityPath: parsed.activityPath === null &&
-      parsed.mode === Mode.STUDENT &&
-      !parsed.learningStartedAt
-      ? null
-      : parsed.activityPath === ActivityPath.RENATO
-        ? ActivityPath.RENATO
-        : ActivityPath.CLASSIC,
+    activityPath: ActivityPath.RENATO,
     allocation: parsed.allocation || null,
     graphWork: {
       ...initial.graphWork,
@@ -127,7 +109,6 @@ export function normalizeSessionState(parsed) {
           : initial.graphWork.graphStrokes),
     },
     answers: { ...initial.answers, ...(parsed.answers || {}) },
-    classicWork: { ...initial.classicWork, ...(parsed.classicWork || {}) },
     transferAssessment: {
       ...initial.transferAssessment,
       ...(parsed.transferAssessment || {}),
@@ -251,8 +232,6 @@ export function sessionReducer(state, action) {
       return updateTool(state, 'algorithmic', { nodes: action.payload });
     case 'UPDATE_RENATO_WORK':
       return { ...state, renatoWork: { ...state.renatoWork, ...action.payload } };
-    case 'UPDATE_CLASSIC_WORK':
-      return { ...state, classicWork: { ...state.classicWork, ...action.payload } };
     case 'UPDATE_TRANSFER_ASSESSMENT':
       return {
         ...state,

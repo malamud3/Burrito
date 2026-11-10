@@ -12,7 +12,7 @@ import React, {
   useEffect,
   useRef,
 } from 'react';
-import { ActivityPath, LogActionType, Phase } from '../core/types/enums';
+import { LogActionType, Phase } from '../core/types/enums';
 import { getNextPhase } from '../core/constants/phases';
 import { getPhaseFromPath, PHASE_PATHS } from '../core/constants/routes';
 import { useSessionContext } from './SessionContext';
@@ -31,22 +31,13 @@ const readStoredPhase = (activityPath) => {
       return storedPhase;
     }
     if (storedPhase === Phase.TRANSFER_EXAM) return storedPhase;
-    if (activityPath === ActivityPath.RENATO) {
-      return [
-        Phase.RENATO,
-        Phase.RENATO_ASYMPTOTES,
-        Phase.RENATO_INTERCEPTS,
-        Phase.RENATO_EXTREMA,
-        Phase.RENATO_GRAPH,
-      ].includes(storedPhase) ? storedPhase : Phase.RENATO;
-    }
     return [
-      Phase.CLASSIC,
-      Phase.CLASSIC_EXTREMA,
-      Phase.CLASSIC_ASYMPTOTES,
-      Phase.CLASSIC_INTERCEPTS,
-      Phase.CLASSIC_GRAPH,
-    ].includes(storedPhase) ? storedPhase : Phase.CLASSIC;
+      Phase.RENATO,
+      Phase.RENATO_ASYMPTOTES,
+      Phase.RENATO_INTERCEPTS,
+      Phase.RENATO_EXTREMA,
+      Phase.RENATO_GRAPH,
+    ].includes(storedPhase) ? storedPhase : Phase.RENATO;
   } catch (error) {
     console.warn('Failed to restore phase from localStorage', error);
     return Phase.LOGIN;

@@ -15,14 +15,32 @@ import React, {
 } from 'react';
 import { generateLogId } from '../core/utils/idGenerator';
 import { formatTimestamp } from '../core/utils/timeFormatter';
+import {
+  CT_DATA_VERSION,
+  CT_DATA_VERSION_KEY,
+  CT_LOG_SCHEMA_VERSION,
+  inferCognitiveTags,
+} from '../core/constants/ctLogging';
 
 const LogContext = createContext(null);
 const STORAGE_KEY = 'ctAdapt.logs';
+
+function resetLegacyDemoData() {
+  if (typeof window === 'undefined' || !window.localStorage) return;
+  if (window.localStorage.getItem(CT_DATA_VERSION_KEY) === CT_DATA_VERSION) return;
+
+  window.localStorage.removeItem('ctAdapt.logs');
+  window.localStorage.removeItem('ctAdapt.session');
+  window.localStorage.removeItem('ctAdapt.phase');
+  window.localStorage.removeItem('ctAdapt.allocation');
+  window.localStorage.setItem(CT_DATA_VERSION_KEY, CT_DATA_VERSION);
+}
 
 const readStoredLogs = () => {
   if (typeof window === 'undefined' || !window.localStorage) return [];
 
   try {
+    resetLegacyDemoData();
     const raw = window.localStorage.getItem(STORAGE_KEY);
     if (!raw) return [];
     const parsed = JSON.parse(raw);
@@ -54,13 +72,17 @@ export function LogProvider({ children }) {
   }, [logs]);
 
   const addLog = useCallback((actionType, data = {}, skill = null) => {
+    const phase = data.phase || null;
     const entry = {
       id: generateLogId(),
       timestamp: Date.now(),
       isoTime: formatTimestamp(),
       actionType,
       skill,
-      data,
+      source: data.source || 'ui',
+      schemaVersion: CT_LOG_SCHEMA_VERSION,
+      ctTags: data.ctTags || inferCognitiveTags(actionType, data, skill),
+      data: { ...data, phase },
     };
     logsRef.current = [...logsRef.current, entry];
     setLogs(logsRef.current);

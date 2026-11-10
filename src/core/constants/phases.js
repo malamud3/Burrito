@@ -2,16 +2,11 @@
 // src/core/constants/phases.js
 // ============================================================
 
-import { ActivityPath, Phase } from '../types/enums';
+import { Phase } from '../types/enums';
 
 export const PHASE_CONFIG = {
   [Phase.LOGIN]: { label: 'כניסה', progress: 0, icon: '🔑' },
   [Phase.PRE_ASSESSMENT]: { label: 'בוחן מקדים', progress: 10, icon: '📝' },
-  [Phase.CLASSIC]: { label: 'שלב 1 מתוך 4 — תחום ההגדרה', progress: 30, icon: '📘' },
-  [Phase.CLASSIC_EXTREMA]: { label: 'שלב 2 מתוך 4 — נקודות קיצון', progress: 43, icon: '📘' },
-  [Phase.CLASSIC_ASYMPTOTES]: { label: 'שלב 3 מתוך 4 — אסימפטוטות', progress: 56, icon: '📘' },
-  [Phase.CLASSIC_INTERCEPTS]: { label: 'שלב 4 מתוך 4 — חיתוך עם הצירים', progress: 69, icon: '📘' },
-  [Phase.CLASSIC_GRAPH]: { label: 'פתרון מסכם — שרטוט הפונקציה', progress: 83, icon: '✏️' },
   [Phase.PROBLEM]: { label: 'שלב 1: הצגת הבעיה', progress: 10, icon: '📖' },
   [Phase.SOLVING]: { label: 'שלב 2: פתרון', progress: 30, icon: '🧠' },
   [Phase.DIFFICULTY]: { label: 'זיהוי קושי', progress: 45, icon: '🔎' },
@@ -30,14 +25,7 @@ export const PHASE_CONFIG = {
 };
 
 const LEARNING_PHASES = {
-  [ActivityPath.CLASSIC]: [
-    Phase.CLASSIC,
-    Phase.CLASSIC_EXTREMA,
-    Phase.CLASSIC_ASYMPTOTES,
-    Phase.CLASSIC_INTERCEPTS,
-    Phase.CLASSIC_GRAPH,
-  ],
-  [ActivityPath.RENATO]: [
+  renato: [
     Phase.RENATO,
     Phase.RENATO_EXTREMA,
     Phase.RENATO_ASYMPTOTES,
@@ -49,12 +37,11 @@ const LEARNING_PHASES = {
 export function getNextPhase(currentPhase, activityPath) {
   if (currentPhase === Phase.LOGIN) return Phase.PRE_ASSESSMENT;
   if (currentPhase === Phase.PRE_ASSESSMENT) {
-    return LEARNING_PHASES[activityPath]?.[0] || null;
+    return LEARNING_PHASES.renato[0];
   }
   if (currentPhase === Phase.TRANSFER_EXAM) return Phase.COMPLETION;
 
-  const learningPhases = LEARNING_PHASES[activityPath];
-  if (!learningPhases) return null;
+  const learningPhases = LEARNING_PHASES.renato;
 
   const phaseIndex = learningPhases.indexOf(currentPhase);
   if (phaseIndex < 0) return null;

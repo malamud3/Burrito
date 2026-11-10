@@ -34,12 +34,14 @@ describe('phase coordinator', () => {
   test('allows an in-flow transfer route and blocks direct access', () => {
     expect(getRedirect({
       phase: Phase.TRANSFER_EXAM,
-      session: activeStudent,
+      session: { ...activeStudent, learningEndedAt: null },
+      now: 1001,
       isTransferNavigation: true,
     })).toBeNull();
     expect(getRedirect({
       phase: Phase.TRANSFER_EXAM,
-      session: activeStudent,
+      session: { ...activeStudent, learningEndedAt: null },
+      now: 1001,
     })).toBe(getPathForPhase(Phase.RENATO));
   });
 

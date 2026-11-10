@@ -79,6 +79,7 @@ export function LogProvider({ children }) {
       isoTime: formatTimestamp(),
       actionType,
       skill,
+      source: data.source || 'ui',
       schemaVersion: CT_LOG_SCHEMA_VERSION,
       ctTags: data.ctTags || inferCognitiveTags(actionType, data, skill),
       data: { ...data, phase },

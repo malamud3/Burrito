@@ -3,7 +3,7 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 import { useSessionContext } from '../context/SessionContext';
 import { usePhaseContext } from '../context/PhaseContext';
 import { Phase } from '../core/types/enums';
-import { PHASE_PATHS } from '../core/constants/routes';
+import { getPathForPhase } from '../coordinator/phaseCoordinator';
 import AppHeader from '../components/layout/AppHeader';
 import LearningTimeoutController from './LearningTimeoutController';
 import PhaseRoute from './PhaseRoute';
@@ -13,8 +13,8 @@ export default function AppRouter() {
   const { session } = useSessionContext();
   const { currentPhase } = usePhaseContext();
   const rootPath = session.isActive
-    ? PHASE_PATHS[currentPhase] || PHASE_PATHS[Phase.LOGIN]
-    : PHASE_PATHS[Phase.LOGIN];
+    ? getPathForPhase(currentPhase)
+    : getPathForPhase(Phase.LOGIN);
 
   return (
     <div className="app-shell">

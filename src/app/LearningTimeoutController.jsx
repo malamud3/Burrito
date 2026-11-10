@@ -5,7 +5,7 @@ import { useLogContext } from '../context/LogContext';
 import { usePhaseNavigation } from '../hooks/usePhaseNavigation';
 import { LogActionType, Mode } from '../core/types/enums';
 import { STUDY_DURATION_SECONDS } from '../core/constants/study';
-import { isLearningPhase } from './routeGuards';
+import { isLearningPhase } from '../coordinator/phaseCoordinator';
 
 export default function LearningTimeoutController() {
   const { session, endLearning } = useSessionContext();

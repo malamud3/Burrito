@@ -57,7 +57,6 @@ export function usePhaseNavigation() {
     () => ({
       goToLogin: () => goTo(Phase.LOGIN),
       goToPreAssessment: () => goTo(Phase.PRE_ASSESSMENT),
-      goToClassic: () => goTo(Phase.CLASSIC),
       goToProblem: () => goTo(Phase.PROBLEM),
       goToSolving: () => goTo(Phase.SOLVING),
       goToDifficulty: () => goTo(Phase.DIFFICULTY),

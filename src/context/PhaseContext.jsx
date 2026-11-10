@@ -12,9 +12,12 @@ import React, {
   useEffect,
   useRef,
 } from 'react';
-import { ActivityPath, LogActionType, Phase } from '../core/types/enums';
-import { getNextPhase } from '../core/constants/phases';
-import { getPhaseFromPath, PHASE_PATHS } from '../core/constants/routes';
+import { LogActionType, Phase } from '../core/types/enums';
+import { getPhaseFromPath } from '../core/constants/routes';
+import {
+  getNextPhase,
+  getPathForPhase,
+} from '../coordinator/phaseCoordinator';
 import { useSessionContext } from './SessionContext';
 import { useLogContext } from './LogContext';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -22,7 +25,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 const PhaseContext = createContext(null);
 export const PHASE_STORAGE_KEY = 'ctAdapt.phase';
 
-const readStoredPhase = (activityPath) => {
+const readStoredPhase = () => {
   if (typeof window === 'undefined' || !window.localStorage) return Phase.LOGIN;
 
   try {
@@ -31,22 +34,13 @@ const readStoredPhase = (activityPath) => {
       return storedPhase;
     }
     if (storedPhase === Phase.TRANSFER_EXAM) return storedPhase;
-    if (activityPath === ActivityPath.RENATO) {
-      return [
-        Phase.RENATO,
-        Phase.RENATO_ASYMPTOTES,
-        Phase.RENATO_INTERCEPTS,
-        Phase.RENATO_EXTREMA,
-        Phase.RENATO_GRAPH,
-      ].includes(storedPhase) ? storedPhase : Phase.RENATO;
-    }
     return [
-      Phase.CLASSIC,
-      Phase.CLASSIC_EXTREMA,
-      Phase.CLASSIC_ASYMPTOTES,
-      Phase.CLASSIC_INTERCEPTS,
-      Phase.CLASSIC_GRAPH,
-    ].includes(storedPhase) ? storedPhase : Phase.CLASSIC;
+      Phase.RENATO,
+      Phase.RENATO_ASYMPTOTES,
+      Phase.RENATO_INTERCEPTS,
+      Phase.RENATO_EXTREMA,
+      Phase.RENATO_GRAPH,
+    ].includes(storedPhase) ? storedPhase : Phase.RENATO;
   } catch (error) {
     console.warn('Failed to restore phase from localStorage', error);
     return Phase.LOGIN;
@@ -61,7 +55,7 @@ export function PhaseProvider({ children }) {
   const lastObservedPath = useRef(location.pathname);
   const [currentPhase, setCurrentPhase] = useState(() =>
     session.isActive
-      ? getPhaseFromPath(location.pathname) || readStoredPhase(session.activityPath)
+      ? getPhaseFromPath(location.pathname) || readStoredPhase()
       : Phase.LOGIN,
   );
   const [phaseHistory, setPhaseHistory] = useState([currentPhase]);
@@ -106,8 +100,7 @@ export function PhaseProvider({ children }) {
   }, [currentPhase, session.isActive]);
 
   const navigateTo = useCallback((phase) => {
-    const path = PHASE_PATHS[phase];
-    if (!path) throw new Error(`No route is registered for phase "${phase}"`);
+    const path = getPathForPhase(phase);
     navigate(
       path,
       phase === Phase.TRANSFER_EXAM
@@ -118,9 +111,9 @@ export function PhaseProvider({ children }) {
   }, [navigate]);
 
   const navigateNext = useCallback(() => {
-    const nextPhase = getNextPhase(currentPhase, session.activityPath);
+    const nextPhase = getNextPhase(currentPhase);
     if (nextPhase) navigateTo(nextPhase);
-  }, [currentPhase, session.activityPath, navigateTo]);
+  }, [currentPhase, navigateTo]);
 
   const resetPhase = useCallback(() => {
     setCurrentPhase(Phase.LOGIN);

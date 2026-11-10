@@ -4,7 +4,6 @@ import TextInputField from '../form/TextInputField';
 import SelectField from '../form/SelectField';
 import ScreenActions from '../layout/ScreenActions';
 import ActionButton from '../ui/ActionButton';
-import LoginPathPicker from './LoginPathPicker';
 import LoginResearchNotice from './LoginResearchNotice';
 
 const MODE_OPTIONS = [
@@ -16,11 +15,8 @@ export default function LoginForm({
   durationMinutes,
   studentId,
   mode,
-  activityPath,
-  showPathPicker,
   onStudentIdChange,
   onModeChange,
-  onActivityPathChange,
   onStart,
 }) {
   return (
@@ -30,7 +26,7 @@ export default function LoginForm({
         <h2 id="login-form-title">מתחילים כאן</h2>
       </div>
       <p className="login-subtitle">
-        הזינו קוד ובחרו מסלול למידה. לאחר הבוחן המקדים תתחיל הפעילות במסלול שבחרתם.
+        הזינו קוד. לאחר הבוחן המקדים תתחיל פעילות רנאטו המתמקדת בחשיבה חישובית.
       </p>
 
       <TextInputField
@@ -44,10 +40,6 @@ export default function LoginForm({
         onKeyDown={(event) => event.key === 'Enter' && onStart()}
         placeholder="הכנס קוד משתתף/ת"
       />
-
-      {showPathPicker && (
-        <LoginPathPicker value={activityPath} onChange={onActivityPathChange} />
-      )}
 
       <SelectField
         id="mode"

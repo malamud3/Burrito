@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useSessionContext } from '../../context/SessionContext';
 import { usePhaseContext } from '../../context/PhaseContext';
 import { PHASE_CONFIG } from '../../core/constants/phases';
-import { ActivityPath, Mode, Phase } from '../../core/types/enums';
+import { Mode, Phase } from '../../core/types/enums';
 import { STUDY_DURATION_SECONDS } from '../../core/constants/study';
 import { formatTime } from '../../core/utils/timeFormatter';
 import AppBadge from '../ui/AppBadge';
@@ -39,7 +39,6 @@ export default function AppHeader() {
   }
 
   const phaseConfig = PHASE_CONFIG[currentPhase];
-  const isRenato = session.activityPath === ActivityPath.RENATO;
 
   return (
     <header className="app-header">
@@ -49,8 +48,8 @@ export default function AppHeader() {
       </h1>
       <div className="header-info">
         <AppBadge>{session.studentId}</AppBadge>
-        <AppBadge className={`badge ${isRenato ? 'badge-renato' : 'badge-classic'}`}>
-          {isRenato ? 'מסלול רנאטו' : 'מסלול קלאסי'}
+        <AppBadge className="badge badge-renato">
+          מסלול רנאטו — חשיבה חישובית
         </AppBadge>
         <AppBadge>
           {phaseConfig?.icon} {phaseConfig?.label}

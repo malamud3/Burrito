@@ -7,8 +7,7 @@ export const createInitialSessionState = () => ({
   sessionId: null,
   group: null,
   mode: Mode.STUDENT,
-  activityPath: ActivityPath.CLASSIC,
-  allocation: null,
+  activityPath: ActivityPath.RENATO,
   isActive: false,
   startTime: null,
   learningStartedAt: null,
@@ -32,18 +31,6 @@ export const createInitialSessionState = () => ({
     analogDecomp: '',
     analogAbstract: '',
     analogAnswer: '',
-  },
-  classicWork: {
-    domain: '',
-    derivative: '',
-    criticalPoints: '',
-    extremaPoints: '',
-    verticalAsymptotes: '',
-    horizontalAsymptote: '',
-    yAxisIntercept: '',
-    xAxisIntercept: '',
-    signBehavior: '',
-    graph: '',
   },
   transferAssessment: {
     domain: '',
@@ -109,14 +96,7 @@ export function normalizeSessionState(parsed) {
     ...initial,
     ...parsed,
     sessionId: parsed.sessionId || `session_${parsed.startTime || Date.now()}`,
-    activityPath: parsed.activityPath === null &&
-      parsed.mode === Mode.STUDENT &&
-      !parsed.learningStartedAt
-      ? null
-      : parsed.activityPath === ActivityPath.RENATO
-        ? ActivityPath.RENATO
-        : ActivityPath.CLASSIC,
-    allocation: parsed.allocation || null,
+    activityPath: ActivityPath.RENATO,
     graphWork: {
       ...initial.graphWork,
       ...(parsed.graphWork || {}),
@@ -127,7 +107,6 @@ export function normalizeSessionState(parsed) {
           : initial.graphWork.graphStrokes),
     },
     answers: { ...initial.answers, ...(parsed.answers || {}) },
-    classicWork: { ...initial.classicWork, ...(parsed.classicWork || {}) },
     transferAssessment: {
       ...initial.transferAssessment,
       ...(parsed.transferAssessment || {}),
@@ -214,12 +193,6 @@ export function sessionReducer(state, action) {
         isActive: true,
         startTime: Date.now(),
       };
-    case 'ASSIGN_STUDY_PATH':
-      return {
-        ...state,
-        activityPath: action.payload.activityPath,
-        allocation: action.payload.allocation,
-      };
     case 'SET_ANSWER':
       return {
         ...state,
@@ -251,8 +224,6 @@ export function sessionReducer(state, action) {
       return updateTool(state, 'algorithmic', { nodes: action.payload });
     case 'UPDATE_RENATO_WORK':
       return { ...state, renatoWork: { ...state.renatoWork, ...action.payload } };
-    case 'UPDATE_CLASSIC_WORK':
-      return { ...state, classicWork: { ...state.classicWork, ...action.payload } };
     case 'UPDATE_TRANSFER_ASSESSMENT':
       return {
         ...state,

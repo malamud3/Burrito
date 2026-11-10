@@ -5,7 +5,7 @@ import { usePhaseNavigation } from '../../hooks/usePhaseNavigation';
 import { useLogExport } from '../../hooks/useLogExport';
 import { computeSessionSummary } from '../../services/LogAnalyticsService';
 import { formatTime } from '../../core/utils/timeFormatter';
-import { ActivityPath, Mode } from '../../core/types/enums';
+import { Mode } from '../../core/types/enums';
 import CompletionView from '../completion/CompletionView';
 
 export default function CompletionScreen() {
@@ -22,7 +22,7 @@ export default function CompletionScreen() {
 
   const rows = [
     ['קוד תלמיד/ה', session.studentId],
-    ['מסלול', session.activityPath === ActivityPath.RENATO ? 'רנאטו סאיג — חשיבה חישובית' : 'קלאסי'],
+    ['מסלול', 'רנאטו סאיג — חשיבה חישובית'],
     ['בוחן העברה', sessionLogs.some((entry) => entry.actionType === 'transfer_submit') ? 'הוגש' : 'לא הוגש'],
     ['משך הפעילות', formatTime(summary.totalDurationSeconds)],
     ['פעולות שנרשמו', summary.totalActions],

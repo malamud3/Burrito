@@ -8,12 +8,6 @@ import RenatoScreen, {
   RenatoGraphScreen,
   RenatoInterceptsScreen,
 } from '../components/screens/RenatoScreen';
-import ClassicScreen, {
-  ClassicAsymptotesScreen,
-  ClassicExtremaScreen,
-  ClassicGraphScreen,
-  ClassicInterceptsScreen,
-} from '../components/screens/ClassicScreen';
 import TransferAssessmentScreen from '../components/screens/TransferAssessmentScreen';
 import CompletionScreen from '../components/screens/CompletionScreen';
 import ResearcherDashboard from '../components/screens/ResearcherDashboard';
@@ -21,11 +15,6 @@ import ResearcherDashboard from '../components/screens/ResearcherDashboard';
 export const APP_ROUTES = Object.freeze([
   { phase: Phase.LOGIN, path: PHASE_PATHS[Phase.LOGIN], Screen: LoginScreen },
   { phase: Phase.PRE_ASSESSMENT, path: PHASE_PATHS[Phase.PRE_ASSESSMENT], Screen: PreAssessmentScreen },
-  { phase: Phase.CLASSIC, path: PHASE_PATHS[Phase.CLASSIC], Screen: ClassicScreen },
-  { phase: Phase.CLASSIC_EXTREMA, path: PHASE_PATHS[Phase.CLASSIC_EXTREMA], Screen: ClassicExtremaScreen },
-  { phase: Phase.CLASSIC_ASYMPTOTES, path: PHASE_PATHS[Phase.CLASSIC_ASYMPTOTES], Screen: ClassicAsymptotesScreen },
-  { phase: Phase.CLASSIC_INTERCEPTS, path: PHASE_PATHS[Phase.CLASSIC_INTERCEPTS], Screen: ClassicInterceptsScreen },
-  { phase: Phase.CLASSIC_GRAPH, path: PHASE_PATHS[Phase.CLASSIC_GRAPH], Screen: ClassicGraphScreen },
   { phase: Phase.RENATO, path: PHASE_PATHS[Phase.RENATO], Screen: RenatoScreen },
   { phase: Phase.RENATO_ASYMPTOTES, path: PHASE_PATHS[Phase.RENATO_ASYMPTOTES], Screen: RenatoAsymptotesScreen },
   { phase: Phase.RENATO_INTERCEPTS, path: PHASE_PATHS[Phase.RENATO_INTERCEPTS], Screen: RenatoInterceptsScreen },
